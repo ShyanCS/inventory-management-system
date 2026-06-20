@@ -1,0 +1,64 @@
+services:
+  # ─────────────────────────────────────────────────────────────────
+  # Database Service (PostgreSQL)
+  # ─────────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: inventory-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-inventory_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-inventory}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-inventory_user} -d ${POSTGRES_DB:-inventory}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────────────────────────────
+  # Backend Service (FastAPI + Uvicorn)
+  # ─────────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: inventory-backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Use internal docker networking to reach DB
+      - POSTGRES_USER=${POSTGRES_USER:-inventory_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_DB=${POSTGRES_DB:-inventory}
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-inventory_user}:${POSTGRES_PASSWORD:-changeme}@db:5432/${POSTGRES_DB:-inventory}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+    ports:
+      - "8000:8000"
+
+  # ─────────────────────────────────────────────────────────────────
+  # Frontend Service (React + Nginx)
+  # ─────────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: inventory-frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      # Expose on 3000 as well if needed (though 80 is the standard HTTP port Nginx binds to)
+      - "3000:80"
+
+volumes:
+  postgres_data:

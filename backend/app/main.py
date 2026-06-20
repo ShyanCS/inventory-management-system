@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.core.exceptions import AppException
+from app.routers import products, customers, orders, dashboard
 
 
 def create_app() -> FastAPI:
@@ -43,6 +44,41 @@ def create_app() -> FastAPI:
                 }
             },
         )
+
+    from fastapi.exceptions import RequestValidationError
+    @application.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        return JSONResponse(
+            status_code=422,
+            content={
+                "error": {
+                    "code": "VALIDATION_ERROR",
+                    "message": "The request payload is invalid.",
+                    "details": exc.errors(),
+                }
+            },
+        )
+
+    @application.exception_handler(Exception)
+    async def generic_exception_handler(request: Request, exc: Exception):
+        import logging
+        logging.error(f"Unhandled exception: {exc}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "An unexpected error occurred.",
+                    "details": None,
+                }
+            },
+        )
+
+    # --- Routers ---
+    application.include_router(products.router)
+    application.include_router(customers.router)
+    application.include_router(orders.router)
+    application.include_router(dashboard.router)
 
     # --- Health endpoint ---
     @application.get("/health")
