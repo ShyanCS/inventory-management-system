@@ -114,7 +114,7 @@ export default function ProductForm({ product, onSave, onCancel, apiError }) {
               aria-label="Product Name"
               value={values.name}
               onChange={handleChange}
-              className={`w-full rounded-lg glass-input px-3 py-2.5 text-sm text-white placeholder-slate-500 ${
+              className={`w-full rounded-lg glass-input px-3 py-2.5 text-sm text-white placeholder-black/50 ${
                 errors.name ? '!border-rose-500/50' : ''
               }`}
               placeholder="e.g. Wireless Mouse"
@@ -135,7 +135,7 @@ export default function ProductForm({ product, onSave, onCancel, apiError }) {
               value={values.sku}
               onChange={handleChange}
               disabled={!!product}
-              className={`w-full rounded-lg glass-input font-mono px-3 py-2.5 text-sm text-white placeholder-slate-500 disabled:opacity-50 ${
+              className={`w-full rounded-lg glass-input font-mono px-3 py-2.5 text-sm text-white placeholder-black/50 disabled:opacity-50 ${
                 errors.sku ? '!border-rose-500/50' : ''
               }`}
               placeholder="e.g. WM-1001"
@@ -158,7 +158,7 @@ export default function ProductForm({ product, onSave, onCancel, apiError }) {
                 aria-label="Price"
                 value={values.price}
                 onChange={handleChange}
-                className={`w-full rounded-lg glass-input px-3 py-2.5 text-sm text-white placeholder-slate-500 ${
+                className={`w-full rounded-lg glass-input px-3 py-2.5 text-sm text-white placeholder-black/50 ${
                   errors.price ? '!border-rose-500/50' : ''
                 }`}
                 placeholder="0.00"
@@ -177,7 +177,7 @@ export default function ProductForm({ product, onSave, onCancel, apiError }) {
                 aria-label="Quantity"
                 value={values.quantity_in_stock}
                 onChange={handleChange}
-                className={`w-full rounded-lg glass-input px-3 py-2.5 text-sm text-white placeholder-slate-500 ${
+                className={`w-full rounded-lg glass-input px-3 py-2.5 text-sm text-white placeholder-black/50 ${
                   errors.quantity_in_stock ? '!border-rose-500/50' : ''
                 }`}
                 placeholder="0"

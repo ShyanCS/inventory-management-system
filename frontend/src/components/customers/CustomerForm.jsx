@@ -97,7 +97,7 @@ export default function CustomerForm({ onSave, onCancel, apiError }) {
               aria-label="Full Name"
               value={values.full_name}
               onChange={handleChange}
-              className={`w-full rounded-lg glass-input px-3 py-2.5 text-sm text-white placeholder-slate-500 ${
+              className={`w-full rounded-lg glass-input px-3 py-2.5 text-sm text-white placeholder-black/50 ${
                 errors.full_name ? '!border-rose-500/50' : ''
               }`}
               placeholder="e.g. Alice Johnson"
@@ -117,7 +117,7 @@ export default function CustomerForm({ onSave, onCancel, apiError }) {
               aria-label="Email"
               value={values.email}
               onChange={handleChange}
-              className={`w-full rounded-lg glass-input px-3 py-2.5 text-sm text-white placeholder-slate-500 ${
+              className={`w-full rounded-lg glass-input px-3 py-2.5 text-sm text-white placeholder-black/50 ${
                 errors.email ? '!border-rose-500/50' : ''
               }`}
               placeholder="e.g. alice@example.com"
@@ -137,7 +137,7 @@ export default function CustomerForm({ onSave, onCancel, apiError }) {
               aria-label="Phone"
               value={values.phone}
               onChange={handleChange}
-              className={`w-full rounded-lg glass-input font-mono px-3 py-2.5 text-sm text-white placeholder-slate-500 ${
+              className={`w-full rounded-lg glass-input font-mono px-3 py-2.5 text-sm text-white placeholder-black/50 ${
                 errors.phone ? '!border-rose-500/50' : ''
               }`}
               placeholder="e.g. +1-555-0101"
