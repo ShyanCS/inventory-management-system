@@ -218,7 +218,6 @@ describe('OrdersPage filters', () => {
   })
 
   it('shows a validation message for an inverted date range without calling the API', async () => {
-    const user = userEvent.setup()
     let callCount = 0
     server.use(
       http.get('http://localhost:8000/api/v1/orders', () => {
