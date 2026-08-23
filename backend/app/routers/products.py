@@ -2,7 +2,9 @@
 API router for Products.
 """
 
-from fastapi import APIRouter, Depends, Query, status
+from datetime import UTC, datetime
+
+from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -33,6 +35,21 @@ def list_products(
 ):
     items, total = service.list_products(skip=skip, limit=limit, low_stock=low_stock)
     return Page(items=items, total=total, skip=skip, limit=limit)
+
+
+# NOTE: declared before /{product_id} so "export" is not parsed as an id
+@router.get("/export")
+def export_products(
+    low_stock: bool = Query(False),
+    service: ProductService = Depends(get_product_service),
+):
+    csv_text = service.export_csv(low_stock=low_stock)
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M")
+    return Response(
+        content=csv_text,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="products_{timestamp}.csv"'},
+    )
 
 
 @router.get("/{product_id}", response_model=ProductOut)

@@ -2,6 +2,8 @@
 Repository layer for Customer data access.
 """
 
+from __future__ import annotations
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
