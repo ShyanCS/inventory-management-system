@@ -12,6 +12,7 @@ class ProductBase(BaseModel):
     sku: str = Field(..., max_length=50)
     price: float = Field(..., gt=0)
     quantity_in_stock: int = Field(default=0, ge=0)
+    low_stock_threshold: int = Field(default=10, ge=0, le=10000)
 
 
 class ProductCreate(ProductBase):
@@ -23,6 +24,7 @@ class ProductUpdate(BaseModel):
     sku: str | None = Field(None, max_length=50)
     price: float | None = Field(None, gt=0)
     quantity_in_stock: int | None = Field(None, ge=0)
+    low_stock_threshold: int | None = Field(None, ge=0, le=10000)
 
 
 class ProductOut(ProductBase):

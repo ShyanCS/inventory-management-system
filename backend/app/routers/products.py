@@ -28,10 +28,9 @@ def list_products(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
     low_stock: bool = Query(False),
-    threshold: int = Query(10, ge=0),
     service: ProductService = Depends(get_product_service),
 ):
-    return service.list_products(skip=skip, limit=limit, low_stock=low_stock, threshold=threshold)
+    return service.list_products(skip=skip, limit=limit, low_stock=low_stock)
 
 
 @router.get("/{product_id}", response_model=ProductOut)

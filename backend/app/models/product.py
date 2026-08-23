@@ -29,6 +29,9 @@ class Product(Base):
     quantity_in_stock: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default="0"
     )
+    low_stock_threshold: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=10, server_default="10"
+    )
     created_at: Mapped[datetime] = mapped_column(
         nullable=False,
         default=lambda: datetime.now(UTC),

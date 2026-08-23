@@ -4,7 +4,13 @@
  */
 import { useState } from 'react'
 
-const emptyForm = { name: '', sku: '', price: '', quantity_in_stock: '0' }
+const emptyForm = {
+  name: '',
+  sku: '',
+  price: '',
+  quantity_in_stock: '0',
+  low_stock_threshold: '10',
+}
 
 function validate(values) {
   const errors = {}
@@ -29,6 +35,7 @@ export default function ProductForm({ product, onSave, onCancel, apiError }) {
           sku: product.sku ?? '',
           price: product.price ?? '',
           quantity_in_stock: product.quantity_in_stock ?? 0,
+          low_stock_threshold: product.low_stock_threshold ?? 10,
         }
       : emptyForm,
   )
@@ -56,6 +63,7 @@ export default function ProductForm({ product, onSave, onCancel, apiError }) {
         sku: values.sku.trim(),
         price: parseFloat(values.price),
         quantity_in_stock: parseInt(values.quantity_in_stock, 10),
+        low_stock_threshold: parseInt(values.low_stock_threshold, 10),
       })
     } finally {
       setSubmitting(false)
@@ -191,6 +199,32 @@ export default function ProductForm({ product, onSave, onCancel, apiError }) {
                 <p className="mt-1.5 text-xs text-rose-400">{errors.quantity_in_stock}</p>
               )}
             </div>
+          </div>
+
+          {/* Low stock threshold */}
+          <div>
+            <label
+              htmlFor="prod-threshold"
+              className="block text-sm font-medium text-slate-300 mb-1.5"
+            >
+              Low Stock Threshold
+            </label>
+            <input
+              id="prod-threshold"
+              name="low_stock_threshold"
+              type="number"
+              min="0"
+              aria-label="Low stock threshold"
+              value={values.low_stock_threshold}
+              onChange={handleChange}
+              className={`w-full rounded-lg glass-input px-3 py-2.5 text-sm text-white placeholder-black/50 ${
+                errors.low_stock_threshold ? '!border-rose-500/50' : ''
+              }`}
+              placeholder="10"
+            />
+            {errors.low_stock_threshold && (
+              <p className="mt-1.5 text-xs text-rose-400">{errors.low_stock_threshold}</p>
+            )}
           </div>
 
           {/* Footer */}

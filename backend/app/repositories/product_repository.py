@@ -28,12 +28,10 @@ class ProductRepository:
         stmt = select(Product).where(Product.sku == sku)
         return self.session.execute(stmt).scalar_one_or_none()
 
-    def list(
-        self, skip: int = 0, limit: int = 50, low_stock: bool = False, threshold: int = 10
-    ) -> list[Product]:
+    def list(self, skip: int = 0, limit: int = 50, low_stock: bool = False) -> list[Product]:
         stmt = select(Product)
         if low_stock:
-            stmt = stmt.where(Product.quantity_in_stock <= threshold)
+            stmt = stmt.where(Product.quantity_in_stock <= Product.low_stock_threshold)
         stmt = stmt.offset(skip).limit(limit).order_by(Product.id.desc())
         return list(self.session.execute(stmt).scalars().all())
 

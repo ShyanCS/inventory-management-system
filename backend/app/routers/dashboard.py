@@ -23,7 +23,7 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
     total_orders = db.execute(select(func.count(Order.id))).scalar() or 0
 
     p_service = ProductService(db)
-    low_stock_products = p_service.list_products(skip=0, limit=100, low_stock=True, threshold=10)
+    low_stock_products = p_service.list_products(skip=0, limit=100, low_stock=True)
 
     return {
         "total_products": total_products,
