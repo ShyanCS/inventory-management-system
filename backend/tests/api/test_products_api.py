@@ -53,8 +53,30 @@ def test_list_products(client):
     response = client.get("/api/v1/products")
     assert response.status_code == 200
     data = response.json()
-    assert isinstance(data, list)
-    assert len(data) >= 2
+    assert set(data.keys()) == {"items", "total", "skip", "limit"}
+    assert isinstance(data["items"], list)
+    assert len(data["items"]) >= 2
+    assert data["total"] >= 2
+
+
+def test_list_products_pagination_slices_and_total(client):
+    for i in range(5):
+        client.post(
+            "/api/v1/products",
+            json={"name": f"PG{i}", "sku": f"PG-SKU{i}", "price": 1, "quantity_in_stock": 50},
+        )
+
+    page1 = client.get("/api/v1/products?skip=0&limit=2").json()
+    page2 = client.get("/api/v1/products?skip=2&limit=2").json()
+
+    assert len(page1["items"]) == 2
+    assert len(page2["items"]) == 2
+    assert page1["items"][0]["id"] != page2["items"][0]["id"]
+    # total ignores pagination but respects the low_stock filter
+    assert page1["total"] == page2["total"] >= 5
+
+    low = client.get("/api/v1/products?low_stock=true&skip=0&limit=100").json()
+    assert low["total"] == sum(1 for p in low["items"])
 
 
 def test_update_product(client):
@@ -165,6 +187,6 @@ def test_low_stock_uses_per_product_thresholds(client):
 
     response = client.get("/api/v1/products?low_stock=true")
     assert response.status_code == 200
-    skus = {p["sku"] for p in response.json()}
+    skus = {p["sku"] for p in response.json()["items"]}
     assert {"LOW-A", "LOW-C"} <= skus
     assert "LOW-B" not in skus
