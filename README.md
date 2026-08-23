@@ -112,6 +112,15 @@ npm run test
 
 ---
 
+## 🤝 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the branch/commit conventions and the
+quality gates CI enforces. Notable changes are tracked in [CHANGELOG.md](CHANGELOG.md).
+CI runs lint, format checks, tests with an 80% coverage gate, builds, and
+dependency audits on every push and pull request.
+
+---
+
 ## 📂 Project Structure
 
 ```
