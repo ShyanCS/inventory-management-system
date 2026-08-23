@@ -3,6 +3,27 @@
 All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.0] - 2026-08-23
+
+### Added
+- Per-product `low_stock_threshold` (default 10) with Alembic migration;
+  low-stock filtering, dashboard alerts, and stock badges now respect each
+  product's own threshold.
+- Order list filtering: status (`pending`/`completed`/`cancelled`),
+  inclusive date range, and free-text search by order id or customer name
+  (case-insensitive); invalid statuses and inverted ranges return 422.
+- Paginated envelope (`items`/`total`/`skip`/`limit`) on the products,
+  customers, and orders list endpoints, with filter-aware totals.
+- Shared `<Pagination>` component wired into all three list pages;
+  applying filters resets to page 1.
+- CSV export for products (`GET /api/v1/products/export`) honoring the
+  low-stock filter; CSV export for orders (`GET /api/v1/orders/export`)
+  honoring status/date filters, one row per line item.
+- Soft delete for products: `deleted_at` tombstones, hidden from all read
+  paths, SKUs stay reserved, order creation rejects deleted products (409),
+  and a restore endpoint (`POST /api/v1/products/{id}/restore`).
+- Feature specification documents under `docs/features/`.
+
 ## [1.0.0] - 2026-08-23
 
 ### Added
