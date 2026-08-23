@@ -257,3 +257,58 @@ describe('OrdersPage filters', () => {
     expect(await screen.findByText(/no orders yet/i)).toBeInTheDocument()
   })
 })
+
+describe('OrdersPage CSV export', () => {
+  it('passes current status and date filters to the export request', async () => {
+    const user = userEvent.setup()
+    let listUrl = ''
+    let exportUrl = ''
+    server.use(
+      http.get('http://localhost:8000/api/v1/orders', ({ request }) => {
+        listUrl = request.url
+        return HttpResponse.json({ items: [], total: 0, skip: 0, limit: 50 })
+      }),
+      http.get('http://localhost:8000/api/v1/orders/export', ({ request }) => {
+        exportUrl = request.url
+        return new HttpResponse('order_id,status\n', {
+          headers: { 'Content-Type': 'text/csv; charset=utf-8' },
+        })
+      }),
+    )
+    render(<OrdersPage />)
+    await screen.findByLabelText(/search orders/i)
+
+    await user.selectOptions(screen.getByLabelText(/filter by status/i), 'pending')
+    fireEvent.change(screen.getByLabelText(/from date/i), { target: { value: '2026-01-01' } })
+    await waitFor(() => expect(listUrl).toContain('date_from=2026-01-01'))
+
+    await user.click(screen.getByRole('button', { name: /export csv/i }))
+
+    await waitFor(() => {
+      expect(exportUrl).toContain('status=pending')
+      expect(exportUrl).toContain('date_from=2026-01-01')
+    })
+  })
+
+  it('shows an error banner when the export fails', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.get('http://localhost:8000/api/v1/orders/export', () => {
+        return HttpResponse.json(
+          {
+            error: { code: 'INTERNAL_ERROR', message: 'Export failed on the server', details: {} },
+          },
+          { status: 500 },
+        )
+      }),
+    )
+    render(<OrdersPage />)
+    await screen.findByLabelText(/search orders/i)
+
+    await user.click(screen.getByRole('button', { name: /export csv/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText(/export failed on the server/i)).toBeInTheDocument()
+    })
+  })
+})

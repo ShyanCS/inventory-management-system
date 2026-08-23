@@ -10,7 +10,9 @@ import { useCustomers } from '../hooks/useCustomers'
 import OrderForm from '../components/orders/OrderForm'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import Pagination from '../components/common/Pagination'
-import { Plus, XCircle, ChevronDown, Search } from 'lucide-react'
+import { ordersApi } from '../api/orders'
+import { downloadBlobResponse, apiErrorMessage } from '../api/download'
+import { Plus, XCircle, ChevronDown, Search, Download } from 'lucide-react'
 
 const PAGE_SIZE = 10
 
@@ -81,6 +83,27 @@ export default function OrdersPage() {
   const hasActiveFilters = Object.values(filters).some((value) => value !== '')
 
   const [page, setPage] = useState(1)
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState(null)
+
+  // Exports honor status/date filters; search term is intentionally ignored
+  const handleExport = async () => {
+    setExportError(null)
+    setExporting(true)
+    try {
+      const filterParams = buildParams({
+        status: filters.status,
+        date_from: filters.date_from,
+        date_to: filters.date_to,
+      })
+      const response = await ordersApi.exportCsv(filterParams)
+      downloadBlobResponse(response, 'orders.csv')
+    } catch (err) {
+      setExportError(apiErrorMessage(err, 'Failed to export orders.'))
+    } finally {
+      setExporting(false)
+    }
+  }
 
   const handlePageChange = (nextPage) => {
     setPage(nextPage)
@@ -136,15 +159,36 @@ export default function OrdersPage() {
           </h1>
           <p className="mt-1 text-black/60 font-medium">Track and manage customer orders</p>
         </div>
-        <button
-          id="new-order-btn"
-          onClick={openNew}
-          className="flex items-center gap-2 rounded-lg bg-black text-white px-4 py-2 text-sm font-medium border border-black/10 hover:bg-black/80 transition-all"
-        >
-          <Plus className="h-4 w-4" />
-          New Order
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            aria-label="Export CSV"
+            className="flex items-center gap-2 rounded-lg bg-white/70 text-black px-4 py-2 text-sm font-medium border border-black/10 hover:bg-white transition-all disabled:opacity-50"
+          >
+            <Download className="h-4 w-4" />
+            {exporting ? 'Exporting…' : 'Export CSV'}
+          </button>
+          <button
+            id="new-order-btn"
+            onClick={openNew}
+            className="flex items-center gap-2 rounded-lg bg-black text-white px-4 py-2 text-sm font-medium border border-black/10 hover:bg-black/80 transition-all"
+          >
+            <Plus className="h-4 w-4" />
+            New Order
+          </button>
+        </div>
       </div>
+
+      {/* Export error banner */}
+      {exportError && (
+        <div
+          role="alert"
+          className="glass-card !border-rose-500/30 !bg-rose-500/5 px-5 py-4 text-sm text-rose-400"
+        >
+          <span className="font-medium">Error:</span> {exportError}
+        </div>
+      )}
 
       {/* Loading */}
       {loading && (

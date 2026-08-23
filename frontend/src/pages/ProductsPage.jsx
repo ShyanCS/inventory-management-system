@@ -5,7 +5,7 @@
 import { useState } from 'react'
 import { useProducts } from '../hooks/useProducts'
 import { productsApi } from '../api/products'
-import { downloadBlobResponse } from '../api/download'
+import { downloadBlobResponse, apiErrorMessage } from '../api/download'
 import ProductForm from '../components/products/ProductForm'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import Pagination from '../components/common/Pagination'
@@ -67,18 +67,7 @@ export default function ProductsPage() {
       const response = await productsApi.exportCsv()
       downloadBlobResponse(response, 'products.csv')
     } catch (err) {
-      let message
-      const detail = err.response?.data
-      if (typeof detail === 'string') {
-        try {
-          message = JSON.parse(detail)?.error?.message
-        } catch {
-          message = undefined
-        }
-      } else {
-        message = detail?.error?.message
-      }
-      setExportError(message || 'Failed to export products.')
+      setExportError(apiErrorMessage(err, 'Failed to export products.'))
     } finally {
       setExporting(false)
     }
