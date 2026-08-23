@@ -252,3 +252,100 @@ def test_get_product_still_works_after_export_route_added(client):
     response = client.get(f"/api/v1/products/{product_id}")
     assert response.status_code == 200
     assert response.json()["name"] == "Route Check"
+
+
+def test_delete_sets_deleted_at_and_hides_from_list(client):
+    create_resp = client.post(
+        "/api/v1/products", json={"name": "Soft Del", "sku": "SD-001", "price": 5}
+    )
+    product_id = create_resp.json()["id"]
+
+    del_resp = client.delete(f"/api/v1/products/{product_id}")
+    assert del_resp.status_code == 204
+
+    # Hidden from list
+    list_resp = client.get("/api/v1/products")
+    ids = [p["id"] for p in list_resp.json()["items"]]
+    assert product_id not in ids
+
+
+def test_get_deleted_product_returns_404(client):
+    create_resp = client.post(
+        "/api/v1/products", json={"name": "Gone", "sku": "SD-002", "price": 5}
+    )
+    product_id = create_resp.json()["id"]
+    client.delete(f"/api/v1/products/{product_id}")
+
+    response = client.get(f"/api/v1/products/{product_id}")
+    assert response.status_code == 404
+
+
+def test_update_deleted_product_returns_404(client):
+    create_resp = client.post(
+        "/api/v1/products", json={"name": "Update Gone", "sku": "SD-003", "price": 5}
+    )
+    product_id = create_resp.json()["id"]
+    client.delete(f"/api/v1/products/{product_id}")
+
+    response = client.put(f"/api/v1/products/{product_id}", json={"name": "Nope"})
+    assert response.status_code == 404
+
+
+def test_restore_clears_deleted_at(client):
+    create_resp = client.post(
+        "/api/v1/products", json={"name": "Restorable", "sku": "SD-004", "price": 5}
+    )
+    product_id = create_resp.json()["id"]
+    client.delete(f"/api/v1/products/{product_id}")
+
+    restore = client.post(f"/api/v1/products/{product_id}/restore")
+    assert restore.status_code == 200
+    assert restore.json()["id"] == product_id
+
+    # Visible again
+    get_resp = client.get(f"/api/v1/products/{product_id}")
+    assert get_resp.status_code == 200
+
+
+def test_restore_conflicts_when_sku_taken_by_active_product(client):
+    first = client.post(
+        "/api/v1/products", json={"name": "First", "sku": "SD-005", "price": 5}
+    ).json()
+    client.delete(f"/api/v1/products/{first['id']}")
+
+    # A different active product takes the SKU
+    client.post("/api/v1/products", json={"name": "Second", "sku": "SD-005", "price": 6})
+
+    restore = client.post(f"/api/v1/products/{first['id']}/restore")
+    assert restore.status_code == 409
+    assert restore.json()["error"]["code"] == "CONFLICT"
+
+
+def test_create_with_deleted_sku_still_conflicts(client):
+    first = client.post(
+        "/api/v1/products", json={"name": "Original", "sku": "SD-006", "price": 5}
+    ).json()
+    client.delete(f"/api/v1/products/{first['id']}")
+
+    response = client.post(
+        "/api/v1/products", json={"name": "New Same SKU", "sku": "SD-006", "price": 7}
+    )
+    assert response.status_code == 409
+
+
+def test_order_cannot_reference_deleted_product(client):
+    cust_id = client.post(
+        "/api/v1/customers", json={"full_name": "SD", "email": "sd@c.com", "phone": "1"}
+    ).json()["id"]
+    prod = client.post(
+        "/api/v1/products",
+        json={"name": "Ordered Then Deleted", "sku": "SD-007", "price": 5, "quantity_in_stock": 5},
+    ).json()
+    client.delete(f"/api/v1/products/{prod['id']}")
+
+    response = client.post(
+        "/api/v1/orders",
+        json={"customer_id": cust_id, "items": [{"product_id": prod["id"], "quantity": 1}]},
+    )
+    assert response.status_code == 409
+    assert response.json()["error"]["code"] == "CONFLICT"
