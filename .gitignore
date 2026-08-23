@@ -64,3 +64,6 @@ target/
 vendor/
 coverage/
 tmp/
+
+.coverage
+htmlcov/
