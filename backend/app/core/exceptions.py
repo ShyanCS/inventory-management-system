@@ -33,3 +33,10 @@ class ConflictException(AppException):
         self, code: str = "CONFLICT", message: str = "Conflict", details: dict | None = None
     ):
         super().__init__(code=code, message=message, status_code=409, details=details)
+
+
+class UnprocessableException(AppException):
+    """Raised when a request is semantically invalid (422)."""
+
+    def __init__(self, message: str = "Unprocessable request", details: dict | None = None):
+        super().__init__(code="VALIDATION_ERROR", message=message, status_code=422, details=details)
