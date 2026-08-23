@@ -129,4 +129,28 @@ describe('OrdersPage', () => {
       expect(screen.queryByText(/are you sure/i)).not.toBeInTheDocument()
     })
   })
+
+  it('shows an error banner when cancelling an order fails', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.delete('http://localhost:8000/api/v1/orders/:id', () => {
+        return HttpResponse.json(
+          { error: { code: 'CONFLICT', message: 'Order cannot be cancelled in its current state', details: {} } },
+          { status: 409 }
+        )
+      })
+    )
+    render(<OrdersPage />)
+    await waitFor(() => screen.getByText('#1'))
+
+    await user.click(screen.getAllByRole('button', { name: /cancel order/i })[0])
+    await waitFor(() => {
+      expect(screen.getByText(/are you sure/i)).toBeInTheDocument()
+    })
+    await user.click(screen.getByRole('button', { name: /confirm/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText(/cannot be cancelled/i)).toBeInTheDocument()
+    })
+  })
 })

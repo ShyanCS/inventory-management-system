@@ -32,6 +32,7 @@ export default function OrdersPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [formApiError, setFormApiError] = useState(null)
   const [cancelTarget, setCancelTarget] = useState(null)
+  const [cancelError, setCancelError] = useState(null)
   const [expandedOrder, setExpandedOrder] = useState(null)
 
   // Build customer lookup map
@@ -59,10 +60,11 @@ export default function OrdersPage() {
 
   const handleCancelConfirm = async () => {
     if (!cancelTarget) return
+    setCancelError(null)
     try {
       await cancelOrder(cancelTarget.id)
-    } catch {
-      // error captured by hook; order list will remain unchanged
+    } catch (err) {
+      setCancelError(err.response?.data?.error?.message || 'Failed to cancel order.')
     } finally {
       setCancelTarget(null)
     }
@@ -101,6 +103,13 @@ export default function OrdersPage() {
       {!loading && error && (
         <div role="alert" className="glass-card !border-rose-500/30 !bg-rose-500/5 px-5 py-4 text-sm text-rose-400">
           <span className="font-medium">Error:</span> {error}
+        </div>
+      )}
+
+      {/* Cancel error banner */}
+      {cancelError && (
+        <div role="alert" className="glass-card !border-rose-500/30 !bg-rose-500/5 px-5 py-4 text-sm text-rose-400">
+          <span className="font-medium">Error:</span> {cancelError}
         </div>
       )}
 
