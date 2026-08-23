@@ -43,7 +43,7 @@ export function useOrders() {
 
   // Fetch with optional filter params; remembers the latest params so
   // refreshes after mutations keep the active filters applied.
-  const fetchOrders = useCallback(async (params) => {
+  const fetchOrders = useCallback(async (params = undefined) => {
     if (params !== undefined) filtersRef.current = params
     try {
       const { data } = await ordersApi.list(params ?? filtersRef.current)

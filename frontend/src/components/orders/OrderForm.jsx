@@ -13,7 +13,7 @@ const emptyItem = () => ({ product_id: '', quantity: 1 })
 export default function OrderForm({ customers, products, onSave, onCancel, apiError }) {
   const [customerId, setCustomerId] = useState('')
   const [items, setItems] = useState([emptyItem()])
-  const [errors, setErrors] = useState({})
+  const [errors, setErrors] = useState(/** @type {Record<string, any>} */ ({}))
   const [submitting, setSubmitting] = useState(false)
 
   const addLine = () => setItems((prev) => [...prev, emptyItem()])

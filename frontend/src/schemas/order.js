@@ -10,10 +10,7 @@ export const orderItemSchema = z.object({
     .union([z.string(), z.number()])
     .refine((v) => v !== '' && v != null, { message: 'Product is required' }),
   quantity: requiredNumber('Min quantity is 1').pipe(
-    z
-      .number({ message: 'Min quantity is 1' })
-      .int('Min quantity is 1')
-      .min(1, 'Min quantity is 1'),
+    z.number({ message: 'Min quantity is 1' }).int('Min quantity is 1').min(1, 'Min quantity is 1'),
   ),
 })
 

@@ -53,7 +53,7 @@ export const productHandlers = [
 
   // Create product
   http.post(`${BASE}/products`, async ({ request }) => {
-    const body = await request.json()
+    const body = /** @type {any} */ (await request.json())
     // Simulate duplicate SKU
     if (body.sku === 'DUPE-SKU') {
       return HttpResponse.json(
@@ -78,7 +78,7 @@ export const productHandlers = [
 
   // Update product
   http.put(`${BASE}/products/:id`, async ({ params, request }) => {
-    const body = await request.json()
+    const body = /** @type {any} */ (await request.json())
     const product = mockProducts.find((p) => p.id === Number(params.id))
     if (!product) {
       return HttpResponse.json(

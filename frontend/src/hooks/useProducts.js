@@ -44,7 +44,7 @@ export function useProducts() {
 
   // Fetch with optional pagination/filter params; remembers the latest params
   // so refreshes after mutations keep them applied.
-  const fetchProducts = useCallback(async (params) => {
+  const fetchProducts = useCallback(async (params = undefined) => {
     if (params !== undefined) paramsRef.current = params
     try {
       const { data } = await productsApi.list(params ?? paramsRef.current)

@@ -8,10 +8,7 @@ import { z } from 'zod'
  * fire instead of coercion producing 0.
  */
 export function requiredNumber(message) {
-  return z.preprocess(
-    (v) => (v === '' || v == null ? undefined : v),
-    z.coerce.number({ message }),
-  )
+  return z.preprocess((v) => (v === '' || v == null ? undefined : v), z.coerce.number({ message }))
 }
 
 /**

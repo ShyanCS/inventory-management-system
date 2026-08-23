@@ -66,7 +66,7 @@ export const orderHandlers = [
 
   // Create order
   http.post(`${BASE}/orders`, async ({ request }) => {
-    const body = await request.json()
+    const body = /** @type {any} */ (await request.json())
 
     // Simulate insufficient stock
     if (body.items.some((item) => item.quantity > 100)) {

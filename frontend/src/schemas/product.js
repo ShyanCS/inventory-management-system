@@ -11,15 +11,9 @@ export const productSchema = z.object({
     .trim()
     .min(1, 'Name is required')
     .max(200, 'Name must be at most 200 characters'),
-  sku: z
-    .string()
-    .trim()
-    .min(1, 'SKU is required')
-    .max(50, 'SKU must be at most 50 characters'),
+  sku: z.string().trim().min(1, 'SKU is required').max(50, 'SKU must be at most 50 characters'),
   price: requiredNumber('Price is required').pipe(
-    z
-      .number({ message: 'Price is required' })
-      .gt(0, 'Price must be greater than 0'),
+    z.number({ message: 'Price is required' }).gt(0, 'Price must be greater than 0'),
   ),
   quantity_in_stock: requiredNumber('Quantity is required').pipe(
     z

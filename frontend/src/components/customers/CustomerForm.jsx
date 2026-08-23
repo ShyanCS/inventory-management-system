@@ -10,7 +10,7 @@ const emptyForm = { full_name: '', email: '', phone: '' }
 
 export default function CustomerForm({ onSave, onCancel, apiError }) {
   const [values, setValues] = useState(emptyForm)
-  const [errors, setErrors] = useState({})
+  const [errors, setErrors] = useState(/** @type {Record<string, any>} */ ({}))
   const [submitting, setSubmitting] = useState(false)
 
   const handleChange = (e) => {
