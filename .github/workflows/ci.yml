@@ -33,7 +33,7 @@ jobs:
       - name: Check formatting
         run: npm run format:check
 
-      - name: Run tests with coverage
+      - name: Run tests with coverage (gate: >=80% lines, enforced via vite.config.js thresholds)
         run: npm run test:coverage
 
       - name: Build
