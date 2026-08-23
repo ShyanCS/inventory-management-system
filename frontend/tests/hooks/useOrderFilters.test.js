@@ -1,7 +1,7 @@
 /**
  * Unit tests for the useOrderFilters hook.
  */
-import { renderHook, act, waitFor } from '@testing-library/react'
+import { renderHook, act } from '@testing-library/react'
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { useOrderFilters, buildOrderParams } from '../../src/hooks/useOrderFilters'
 
