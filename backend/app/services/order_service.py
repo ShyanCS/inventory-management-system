@@ -3,10 +3,16 @@ Service layer for Order business logic.
 Handles atomic decrement, stock validation, total calculation, and restocking on cancellation.
 """
 
+from datetime import date
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import ConflictException, NotFoundException
+from app.core.exceptions import (
+    ConflictException,
+    NotFoundException,
+    UnprocessableException,
+)
 from app.models.customer import Customer
 from app.models.order import Order, OrderItem
 from app.models.product import Product
@@ -102,8 +108,27 @@ class OrderService:
             raise NotFoundException(message=f"Order {order_id} not found")
         return order
 
-    def list_orders(self, skip: int = 0, limit: int = 50, customer_id: int = None) -> list[Order]:
-        return self.repo.list(skip=skip, limit=limit, customer_id=customer_id)
+    def list_orders(
+        self,
+        skip: int = 0,
+        limit: int = 50,
+        customer_id: int | None = None,
+        status: str | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        q: str | None = None,
+    ) -> list[Order]:
+        if date_from and date_to and date_to < date_from:
+            raise UnprocessableException(message="date_to must be on or after date_from")
+        return self.repo.list(
+            skip=skip,
+            limit=limit,
+            customer_id=customer_id,
+            status=status,
+            date_from=date_from,
+            date_to=date_to,
+            q=q,
+        )
 
     def cancel_order(self, order_id: int) -> Order:
         order = self.get_order(order_id)
