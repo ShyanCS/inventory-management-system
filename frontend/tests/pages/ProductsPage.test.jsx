@@ -132,6 +132,96 @@ describe('ProductsPage', () => {
     })
   })
 
+  it('renders the low stock threshold input with a default of 10', async () => {
+    const user = userEvent.setup()
+    render(<ProductsPage />)
+    await waitFor(() => screen.getByText('Wireless Mouse'))
+
+    await user.click(screen.getByRole('button', { name: /add product/i }))
+    expect(screen.getByLabelText(/low stock threshold/i)).toHaveValue(10)
+  })
+
+  it('submits the low stock threshold with the product payload', async () => {
+    const user = userEvent.setup()
+    let capturedBody
+    server.use(
+      http.post('http://localhost:8000/api/v1/products', async ({ request }) => {
+        capturedBody = await request.json()
+        return HttpResponse.json(
+          {
+            id: 99,
+            ...capturedBody,
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-01T00:00:00Z',
+          },
+          { status: 201 },
+        )
+      }),
+    )
+    render(<ProductsPage />)
+    await waitFor(() => screen.getByText('Wireless Mouse'))
+
+    await user.click(screen.getByRole('button', { name: /add product/i }))
+    await user.type(screen.getByLabelText(/product name/i), 'Threshold Widget')
+    await user.type(screen.getByLabelText(/sku/i), 'TW-001')
+    await user.type(screen.getByLabelText(/price/i), '9.99')
+    await user.type(screen.getByLabelText(/quantity/i), '25')
+    const thresholdInput = screen.getByLabelText(/low stock threshold/i)
+    await user.clear(thresholdInput)
+    await user.type(thresholdInput, '4')
+    await user.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() => {
+      expect(capturedBody?.low_stock_threshold).toBe(4)
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
+  })
+
+  it('uses the per-product threshold for the low stock badge', async () => {
+    server.use(
+      http.get('http://localhost:8000/api/v1/products', () => {
+        return HttpResponse.json([
+          {
+            id: 1,
+            name: 'Custom Threshold',
+            sku: 'CT-001',
+            price: 5,
+            quantity_in_stock: 8,
+            low_stock_threshold: 5,
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-01T00:00:00Z',
+          },
+        ])
+      }),
+    )
+    render(<ProductsPage />)
+    await waitFor(() => screen.getByText('Custom Threshold'))
+    // stock 8 is above this product's threshold of 5 -> normal state
+    expect(screen.getByText('8 in stock')).toBeInTheDocument()
+  })
+
+  it('falls back to threshold 10 for legacy products without one', async () => {
+    server.use(
+      http.get('http://localhost:8000/api/v1/products', () => {
+        return HttpResponse.json([
+          {
+            id: 2,
+            name: 'Legacy Product',
+            sku: 'LP-001',
+            price: 5,
+            quantity_in_stock: 7,
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-01T00:00:00Z',
+          },
+        ])
+      }),
+    )
+    render(<ProductsPage />)
+    await waitFor(() => screen.getByText('Legacy Product'))
+    // stock 7 <= default threshold 10 -> low state
+    expect(screen.getByText('7 left')).toBeInTheDocument()
+  })
+
   it('shows an error banner when deleting a product fails', async () => {
     const user = userEvent.setup()
     server.use(

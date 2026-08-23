@@ -9,14 +9,14 @@ import ConfirmDialog from '../components/common/ConfirmDialog'
 import { Plus, Edit2, Trash2 } from 'lucide-react'
 
 // Stock badge helper
-function StockBadge({ qty }) {
+function StockBadge({ qty, threshold }) {
   if (qty === 0)
     return (
       <span className="inline-flex items-center rounded-full bg-rose-500/10 border border-rose-500/20 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-rose-400">
         Out of Stock
       </span>
     )
-  if (qty <= 10)
+  if (qty <= threshold)
     return (
       <span className="inline-flex items-center rounded-full bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-amber-400">
         {qty} left
@@ -194,7 +194,10 @@ export default function ProductsPage() {
                       ${Number(product.price).toFixed(2)}
                     </td>
                     <td className="px-6 py-4">
-                      <StockBadge qty={product.quantity_in_stock} />
+                      <StockBadge
+                        qty={product.quantity_in_stock}
+                        threshold={product.low_stock_threshold ?? 10}
+                      />
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
