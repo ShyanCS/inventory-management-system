@@ -5,7 +5,7 @@
 import { useState } from 'react'
 import { useProducts } from '../hooks/useProducts'
 import { productsApi } from '../api/products'
-import { downloadBlobResponse, apiErrorMessage } from '../api/download'
+import { useCsvExport } from '../hooks/useCsvExport'
 import ProductForm from '../components/products/ProductForm'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import Pagination from '../components/common/Pagination'
@@ -52,26 +52,15 @@ export default function ProductsPage() {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteError, setDeleteError] = useState(null)
   const [page, setPage] = useState(1)
-  const [exporting, setExporting] = useState(false)
-  const [exportError, setExportError] = useState(null)
+  const { exporting, exportError, exportCsv } = useCsvExport()
 
   const handlePageChange = (nextPage) => {
     setPage(nextPage)
     fetchProducts({ skip: (nextPage - 1) * PAGE_SIZE, limit: PAGE_SIZE })
   }
 
-  const handleExport = async () => {
-    setExportError(null)
-    setExporting(true)
-    try {
-      const response = await productsApi.exportCsv()
-      downloadBlobResponse(response, 'products.csv')
-    } catch (err) {
-      setExportError(apiErrorMessage(err, 'Failed to export products.'))
-    } finally {
-      setExporting(false)
-    }
-  }
+  const handleExport = () =>
+    exportCsv(() => productsApi.exportCsv(), 'products.csv', 'Failed to export products.')
 
   const openAdd = () => {
     setEditingProduct(null)
