@@ -4,16 +4,17 @@ FastAPI application factory.
 Creates the app, registers routers, configures CORS, and sets up
 global exception handlers for the consistent error envelope.
 """
+
+import time
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-import time
-
 from app.core.config import settings
 from app.core.exceptions import AppException
 from app.core.logging_config import configure_logging, logger
-from app.routers import products, customers, orders, dashboard
+from app.routers import customers, dashboard, orders, products
 
 
 def create_app() -> FastAPI:
@@ -68,6 +69,7 @@ def create_app() -> FastAPI:
         )
 
     from fastapi.exceptions import RequestValidationError
+
     @application.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
         return JSONResponse(

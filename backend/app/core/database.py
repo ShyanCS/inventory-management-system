@@ -6,6 +6,7 @@ Provides:
 - `SessionLocal`: Session factory for creating DB sessions.
 - `get_db`: FastAPI dependency that yields a session per request.
 """
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
@@ -18,6 +19,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy ORM models."""
+
     pass
 
 

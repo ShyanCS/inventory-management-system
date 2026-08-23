@@ -10,12 +10,13 @@ They assert database-level constraints:
   5. Order item quantity must be > 0
   6. Tables are created correctly from models
 """
+
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from app.models.product import Product
 from app.models.customer import Customer
 from app.models.order import Order, OrderItem
+from app.models.product import Product
 
 
 class TestProductConstraints:

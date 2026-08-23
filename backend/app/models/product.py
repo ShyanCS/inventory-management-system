@@ -10,9 +10,10 @@ Matches spec section 4.1 exactly:
   - created_at: TIMESTAMPTZ, NOT NULL, auto-set
   - updated_at: TIMESTAMPTZ, NOT NULL, auto-updated
 """
-from datetime import datetime, timezone
 
-from sqlalchemy import CheckConstraint, Integer, Numeric, String, event
+from datetime import UTC, datetime
+
+from sqlalchemy import CheckConstraint, Integer, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -25,15 +26,17 @@ class Product(Base):
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     sku: Mapped[str] = mapped_column(String(50), nullable=False, unique=True, index=True)
     price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
-    quantity_in_stock: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    quantity_in_stock: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
     created_at: Mapped[datetime] = mapped_column(
         nullable=False,
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
     )
     updated_at: Mapped[datetime] = mapped_column(
         nullable=False,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
 
     __table_args__ = (

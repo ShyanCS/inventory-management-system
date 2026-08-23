@@ -4,10 +4,11 @@ Structured logging configuration for the application.
 Emits single-line JSON records so logs can be ingested directly by
 log aggregators (CloudWatch, Datadog, ELK) without parsing rules.
 """
+
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 logger = logging.getLogger("app")
 
@@ -17,7 +18,7 @@ class JsonFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         payload = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),

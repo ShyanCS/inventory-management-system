@@ -2,6 +2,7 @@
 Tests for global exception handlers.
 """
 
+
 def test_app_exception_envelope(client):
     # Trigger a 404
     response = client.get("/api/v1/products/999999")
@@ -27,16 +28,16 @@ def test_validation_error_envelope(client):
 
 def test_internal_server_error_envelope(monkeypatch):
     # Mock the product service to raise a generic exception
-    from app.routers import products
-    from app.services.product_service import ProductService
     from fastapi.testclient import TestClient
+
     from app.main import app
-    
+    from app.services.product_service import ProductService
+
     def mock_list(*args, **kwargs):
         raise Exception("Unexpected database failure")
-        
+
     monkeypatch.setattr(ProductService, "list_products", mock_list)
-    
+
     # We must set raise_server_exceptions=False so the test client returns 500
     # instead of bubbling the exception up into the test runner.
     client = TestClient(app, raise_server_exceptions=False)

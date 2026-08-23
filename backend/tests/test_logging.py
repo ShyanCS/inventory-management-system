@@ -1,13 +1,16 @@
 """
 Tests for structured JSON logging configuration.
 """
+
 import json
 import logging
 
 from app.core.logging_config import JsonFormatter, configure_logging, logger
 
 
-def _make_record(msg: str, level: int = logging.INFO, extra: dict | None = None) -> logging.LogRecord:
+def _make_record(
+    msg: str, level: int = logging.INFO, extra: dict | None = None
+) -> logging.LogRecord:
     record = logging.LogRecord(
         name="app.test",
         level=level,

@@ -2,6 +2,7 @@
 API tests for the Dashboard router.
 """
 
+
 def test_dashboard_summary(client):
     response = client.get("/api/v1/dashboard/summary")
     assert response.status_code == 200
