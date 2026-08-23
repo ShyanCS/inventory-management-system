@@ -57,7 +57,9 @@ The fastest way to run the application is via Docker Compose. This spins up the 
 
 If you prefer to run the services directly on your host machine for development:
 
-> **Environment variables:** copy `backend/.env.example` to `backend/.env` and adjust values as needed. It documents `DATABASE_URL`, `TEST_DATABASE_URL`, and all other supported settings.
+> **Environment variables:** copy the example files and adjust values as needed.
+> - `backend/.env.example` → `backend/.env` — documents `DATABASE_URL`, `TEST_DATABASE_URL`, `LOG_LEVEL`, `BACKEND_CORS_ORIGINS`, and all other settings the backend reads.
+> - `frontend/.env.example` → `frontend/.env` — documents `VITE_API_BASE_URL` (defaults to `http://localhost:8000/api/v1` when unset).
 
 ### 1. Database
 Ensure you have a PostgreSQL instance running. Create a database named `inventory` and a user.
