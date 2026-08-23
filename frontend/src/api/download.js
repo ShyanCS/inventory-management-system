@@ -4,7 +4,7 @@
  */
 export function downloadBlobResponse(response, fallbackName = 'download.csv') {
   const disposition = response.headers?.['content-disposition'] || ''
-  const match = disposition.match(/filename="?([^";]+)"?/)
+  const match = disposition.match(/filename=["']?([^";']+)["']?/)
   const filename = match ? match[1] : fallbackName
 
   const url = URL.createObjectURL(new Blob([response.data]))
