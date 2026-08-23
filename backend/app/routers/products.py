@@ -66,6 +66,11 @@ def update_product(
     return service.update_product(product_id, product_in)
 
 
+@router.post("/{product_id}/restore", response_model=ProductOut)
+def restore_product(product_id: int, service: ProductService = Depends(get_product_service)):
+    return service.restore_product(product_id)
+
+
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_product(product_id: int, service: ProductService = Depends(get_product_service)):
     service.delete_product(product_id)

@@ -307,18 +307,20 @@ def test_restore_clears_deleted_at(client):
     assert get_resp.status_code == 200
 
 
-def test_restore_conflicts_when_sku_taken_by_active_product(client):
+def test_restore_succeeds_while_original_sku_stays_reserved(client):
     first = client.post(
         "/api/v1/products", json={"name": "First", "sku": "SD-005", "price": 5}
     ).json()
     client.delete(f"/api/v1/products/{first['id']}")
 
-    # A different active product takes the SKU
-    client.post("/api/v1/products", json={"name": "Second", "sku": "SD-005", "price": 6})
+    # Creating a new product with a tombstoned SKU is rejected...
+    dup = client.post("/api/v1/products", json={"name": "Second", "sku": "SD-005", "price": 6})
+    assert dup.status_code == 409
 
+    # ...so the original restores cleanly
     restore = client.post(f"/api/v1/products/{first['id']}/restore")
-    assert restore.status_code == 409
-    assert restore.json()["error"]["code"] == "CONFLICT"
+    assert restore.status_code == 200
+    assert restore.json()["id"] == first["id"]
 
 
 def test_create_with_deleted_sku_still_conflicts(client):

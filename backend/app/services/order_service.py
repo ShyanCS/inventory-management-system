@@ -42,10 +42,15 @@ class OrderService:
 
             product_map = {p.id: p for p in products}
 
-            # Ensure all products exist
+            # Ensure all products exist and are not soft-deleted
             for item in order_in.items:
                 if item.product_id not in product_map:
                     raise NotFoundException(message=f"Product {item.product_id} not found")
+                if product_map[item.product_id].is_deleted:
+                    raise ConflictException(
+                        message=f"Product {item.product_id} is no longer available",
+                        details={"product_id": item.product_id},
+                    )
 
             # Validate stock for all items BEFORE decrementing anything (Rule 4)
             for item in order_in.items:

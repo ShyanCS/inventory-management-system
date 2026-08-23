@@ -98,12 +98,19 @@ class ProductService:
             raise e
 
     def delete_product(self, product_id: int) -> None:
+        """Soft delete: the row keeps referential integrity but disappears
+        from every read path. Its SKU stays reserved."""
         product = self.get_product(product_id)
-        try:
-            self.repo.delete(product)
-        except IntegrityError as e:
-            self.session.rollback()
-            # e.g., if referenced by an order item
-            raise ConflictException(
-                message="Cannot delete product because it is referenced by existing orders."
-            ) from e
+        self.repo.soft_delete(product)
+
+    def restore_product(self, product_id: int) -> Product:
+        """Restore a soft-deleted product. SKU uniqueness is enforced globally
+        by a unique constraint, so a tombstoned SKU can never have been taken."""
+        product = self.repo.get_any_by_id(product_id)
+        if not product:
+            raise NotFoundException(message=f"Product with ID {product_id} not found")
+        if not product.is_deleted:
+            return product
+
+        self.repo.restore(product)
+        return product

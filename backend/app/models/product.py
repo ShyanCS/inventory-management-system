@@ -32,6 +32,10 @@ class Product(Base):
     low_stock_threshold: Mapped[int] = mapped_column(
         Integer, nullable=False, default=10, server_default="10"
     )
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        nullable=True,
+        default=None,
+    )
     created_at: Mapped[datetime] = mapped_column(
         nullable=False,
         default=lambda: datetime.now(UTC),
@@ -46,6 +50,10 @@ class Product(Base):
         CheckConstraint("price > 0", name="ck_products_price_positive"),
         CheckConstraint("quantity_in_stock >= 0", name="ck_products_stock_non_negative"),
     )
+
+    @property
+    def is_deleted(self) -> bool:
+        return self.deleted_at is not None
 
     def __repr__(self) -> str:
         return f"<Product(id={self.id}, sku='{self.sku}', name='{self.name}')>"
