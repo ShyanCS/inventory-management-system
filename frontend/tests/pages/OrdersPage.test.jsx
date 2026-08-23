@@ -1,7 +1,7 @@
 /**
  * Phase 10 — Orders Page Tests (TDD Red → Green)
  */
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect } from 'vitest'
 import { http, HttpResponse } from 'msw'
@@ -32,8 +32,11 @@ describe('OrdersPage', () => {
   it('shows an error banner when the API fails', async () => {
     server.use(
       http.get('http://localhost:8000/api/v1/orders', () => {
-        return HttpResponse.json({ error: { code: 'INTERNAL_ERROR', message: 'Server error', details: null } }, { status: 500 })
-      })
+        return HttpResponse.json(
+          { error: { code: 'INTERNAL_ERROR', message: 'Server error', details: null } },
+          { status: 500 },
+        )
+      }),
     )
     render(<OrdersPage />)
     await waitFor(() => {
@@ -135,10 +138,16 @@ describe('OrdersPage', () => {
     server.use(
       http.delete('http://localhost:8000/api/v1/orders/:id', () => {
         return HttpResponse.json(
-          { error: { code: 'CONFLICT', message: 'Order cannot be cancelled in its current state', details: {} } },
-          { status: 409 }
+          {
+            error: {
+              code: 'CONFLICT',
+              message: 'Order cannot be cancelled in its current state',
+              details: {},
+            },
+          },
+          { status: 409 },
         )
-      })
+      }),
     )
     render(<OrdersPage />)
     await waitFor(() => screen.getByText('#1'))

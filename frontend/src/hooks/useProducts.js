@@ -7,25 +7,47 @@ import { productsApi } from '../api/products'
 
 export function useProducts() {
   const [products, setProducts] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const fetchProducts = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const { data } = await productsApi.list()
-      setProducts(data)
-    } catch (err) {
-      setError(err.response?.data?.error?.message || 'Failed to load products')
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    let ignore = false
+
+    async function startFetching() {
+      try {
+        const { data } = await productsApi.list()
+        if (!ignore) {
+          setProducts(data)
+          setError(null)
+        }
+      } catch (err) {
+        if (!ignore) {
+          setError(err.response?.data?.error?.message || 'Failed to load products')
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false)
+        }
+      }
+    }
+
+    startFetching()
+
+    return () => {
+      ignore = true
     }
   }, [])
 
-  useEffect(() => {
-    fetchProducts()
-  }, [fetchProducts])
+  // Refresh the list after mutations (keeps current UI visible while fetching)
+  const fetchProducts = useCallback(async () => {
+    try {
+      const { data } = await productsApi.list()
+      setProducts(data)
+      setError(null)
+    } catch (err) {
+      setError(err.response?.data?.error?.message || 'Failed to load products')
+    }
+  }, [])
 
   const createProduct = async (productData) => {
     const { data } = await productsApi.create(productData)

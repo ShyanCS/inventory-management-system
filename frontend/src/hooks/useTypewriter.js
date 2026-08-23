@@ -3,13 +3,18 @@ import { useState, useEffect } from 'react'
 export function useTypewriter(text, speed = 38, startDelay = 600) {
   const [displayed, setDisplayed] = useState('')
   const [done, setDone] = useState(false)
+  const [prevText, setPrevText] = useState(text)
+
+  // Reset animation when the target text changes (adjust state during render)
+  if (text !== prevText) {
+    setPrevText(text)
+    setDisplayed('')
+    setDone(false)
+  }
 
   useEffect(() => {
     let timeoutId
     let intervalId
-
-    setDisplayed('')
-    setDone(false)
 
     timeoutId = setTimeout(() => {
       let currentIndex = 0
