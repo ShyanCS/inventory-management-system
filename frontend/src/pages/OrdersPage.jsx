@@ -3,8 +3,9 @@
  * Shows order list with status badges, line item details, and cancel action.
  * Supports filtering by status/date range and debounced search.
  */
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useOrders } from '../hooks/useOrders'
+import { useOrderFilters, buildOrderParams } from '../hooks/useOrderFilters'
 import { useProducts } from '../hooks/useProducts'
 import { useCustomers } from '../hooks/useCustomers'
 import OrderForm from '../components/orders/OrderForm'
@@ -43,46 +44,20 @@ export default function OrdersPage() {
   const [cancelError, setCancelError] = useState(null)
   const [expandedOrder, setExpandedOrder] = useState(null)
 
-  // Filter state: '' means "no filter" for that field
-  const [filters, setFilters] = useState({ status: '', date_from: '', date_to: '', q: '' })
-  const [dateError, setDateError] = useState(null)
-  const searchTimeoutRef = useRef(null)
-
-  // Build a params object with empty filters removed
-  const buildParams = (f) =>
-    Object.fromEntries(Object.entries(f).filter(([, value]) => value !== ''))
-
-  const handleStatusChange = (status) => {
-    const next = { ...filters, status }
-    setFilters(next)
-    setPage(1)
-    fetchOrders(buildParams(next))
-  }
-
-  const handleDateChange = (field, value) => {
-    const next = { ...filters, [field]: value }
-    setFilters(next)
-    if (next.date_from && next.date_to && next.date_to < next.date_from) {
-      setDateError('"To" date must be on or after the "From" date.')
-      return
-    }
-    setDateError(null)
-    setPage(1)
-    fetchOrders(buildParams(next))
-  }
-
-  // Debounced search — schedules the fetch without an effect
-  const handleSearchChange = (q) => {
-    const next = { ...filters, q }
-    setFilters(next)
-    setPage(1)
-    clearTimeout(searchTimeoutRef.current)
-    searchTimeoutRef.current = setTimeout(() => fetchOrders(buildParams(next)), 300)
-  }
-
-  const hasActiveFilters = Object.values(filters).some((value) => value !== '')
-
   const [page, setPage] = useState(1)
+
+  // Any filter change resets to page 1 and refetches
+  const {
+    filters,
+    dateError,
+    hasActiveFilters,
+    handleStatusChange,
+    handleDateChange,
+    handleSearchChange,
+  } = useOrderFilters((params) => {
+    setPage(1)
+    fetchOrders(params)
+  })
   const [exporting, setExporting] = useState(false)
   const [exportError, setExportError] = useState(null)
 
@@ -91,7 +66,7 @@ export default function OrdersPage() {
     setExportError(null)
     setExporting(true)
     try {
-      const filterParams = buildParams({
+      const filterParams = buildOrderParams({
         status: filters.status,
         date_from: filters.date_from,
         date_to: filters.date_to,
@@ -107,7 +82,7 @@ export default function OrdersPage() {
 
   const handlePageChange = (nextPage) => {
     setPage(nextPage)
-    const filterParams = buildParams(filters)
+    const filterParams = buildOrderParams(filters)
     fetchOrders({ ...filterParams, skip: (nextPage - 1) * PAGE_SIZE, limit: PAGE_SIZE })
   }
 
