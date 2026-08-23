@@ -10,16 +10,16 @@ const renderDashboard = () =>
   render(
     <MemoryRouter>
       <DashboardPage />
-    </MemoryRouter>
+    </MemoryRouter>,
   )
 
 describe('DashboardPage', () => {
   it('renders summary stat cards', async () => {
     renderDashboard()
     await waitFor(() => {
-      expect(screen.getByText('12')).toBeInTheDocument()  // total_products
-      expect(screen.getByText('5')).toBeInTheDocument()   // total_customers
-      expect(screen.getByText('3')).toBeInTheDocument()   // total_orders
+      expect(screen.getByText('12')).toBeInTheDocument() // total_products
+      expect(screen.getByText('5')).toBeInTheDocument() // total_customers
+      expect(screen.getByText('3')).toBeInTheDocument() // total_orders
     })
   })
 

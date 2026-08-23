@@ -30,7 +30,7 @@ export default function ProductForm({ product, onSave, onCancel, apiError }) {
           price: product.price ?? '',
           quantity_in_stock: product.quantity_in_stock ?? 0,
         }
-      : emptyForm
+      : emptyForm,
   )
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
