@@ -117,18 +117,17 @@ class OrderService:
         date_from: date | None = None,
         date_to: date | None = None,
         q: str | None = None,
-    ) -> list[Order]:
+    ) -> tuple[list[Order], int]:
         if date_from and date_to and date_to < date_from:
             raise UnprocessableException(message="date_to must be on or after date_from")
-        return self.repo.list(
-            skip=skip,
-            limit=limit,
-            customer_id=customer_id,
-            status=status,
-            date_from=date_from,
-            date_to=date_to,
-            q=q,
-        )
+        filters = {
+            "customer_id": customer_id,
+            "status": status,
+            "date_from": date_from,
+            "date_to": date_to,
+            "q": q,
+        }
+        return self.repo.list(skip=skip, limit=limit, **filters), self.repo.count(**filters)
 
     def cancel_order(self, order_id: int) -> Order:
         order = self.get_order(order_id)

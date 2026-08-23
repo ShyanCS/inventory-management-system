@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.schemas.common import Page
 from app.schemas.customer import CustomerCreate, CustomerOut
 from app.services.customer_service import CustomerService
 
@@ -23,13 +24,14 @@ def create_customer(
     return service.create_customer(customer_in)
 
 
-@router.get("", response_model=list[CustomerOut])
+@router.get("", response_model=Page[CustomerOut])
 def list_customers(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
     service: CustomerService = Depends(get_customer_service),
 ):
-    return service.list_customers(skip=skip, limit=limit)
+    items, total = service.list_customers(skip=skip, limit=limit)
+    return Page(items=items, total=total, skip=skip, limit=limit)
 
 
 @router.get("/{customer_id}", response_model=CustomerOut)

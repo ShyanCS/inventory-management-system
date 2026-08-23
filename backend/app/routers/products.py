@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.schemas.common import Page
 from app.schemas.product import ProductCreate, ProductOut, ProductUpdate
 from app.services.product_service import ProductService
 
@@ -23,14 +24,15 @@ def create_product(
     return service.create_product(product_in)
 
 
-@router.get("", response_model=list[ProductOut])
+@router.get("", response_model=Page[ProductOut])
 def list_products(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
     low_stock: bool = Query(False),
     service: ProductService = Depends(get_product_service),
 ):
-    return service.list_products(skip=skip, limit=limit, low_stock=low_stock)
+    items, total = service.list_products(skip=skip, limit=limit, low_stock=low_stock)
+    return Page(items=items, total=total, skip=skip, limit=limit)
 
 
 @router.get("/{product_id}", response_model=ProductOut)

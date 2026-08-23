@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.schemas.common import Page
 from app.schemas.order import OrderCreate, OrderOut
 from app.services.order_service import OrderService
 
@@ -26,7 +27,7 @@ def create_order(order_in: OrderCreate, service: OrderService = Depends(get_orde
     return service.create_order(order_in)
 
 
-@router.get("", response_model=list[OrderOut])
+@router.get("", response_model=Page[OrderOut])
 def list_orders(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
@@ -37,7 +38,7 @@ def list_orders(
     q: str | None = Query(None, max_length=100),
     service: OrderService = Depends(get_order_service),
 ):
-    return service.list_orders(
+    items, total = service.list_orders(
         skip=skip,
         limit=limit,
         customer_id=customer_id,
@@ -46,6 +47,7 @@ def list_orders(
         date_to=date_to,
         q=q,
     )
+    return Page(items=items, total=total, skip=skip, limit=limit)
 
 
 @router.get("/{order_id}", response_model=OrderOut)

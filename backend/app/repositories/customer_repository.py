@@ -2,7 +2,7 @@
 Repository layer for Customer data access.
 """
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.customer import Customer
@@ -30,6 +30,10 @@ class CustomerRepository:
     def list(self, skip: int = 0, limit: int = 50) -> list[Customer]:
         stmt = select(Customer).offset(skip).limit(limit).order_by(Customer.id.desc())
         return list(self.session.execute(stmt).scalars().all())
+
+    def count(self) -> int:
+        stmt = select(func.count()).select_from(Customer)
+        return self.session.execute(stmt).scalar_one()
 
     def delete(self, customer: Customer) -> None:
         self.session.delete(customer)

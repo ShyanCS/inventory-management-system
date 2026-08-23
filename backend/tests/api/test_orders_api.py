@@ -76,7 +76,7 @@ def test_get_order(client):
 def test_list_orders(client):
     response = client.get("/api/v1/orders")
     assert response.status_code == 200
-    assert isinstance(response.json(), list)
+    assert isinstance(response.json()["items"], list)
 
 
 def test_cancel_order(client):
