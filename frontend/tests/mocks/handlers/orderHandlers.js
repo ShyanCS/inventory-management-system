@@ -34,7 +34,15 @@ const mockSummary = {
   total_customers: 5,
   total_orders: 3,
   low_stock_products: [
-    { id: 2, name: 'USB Keyboard', sku: 'KB-2002', price: 34.99, quantity_in_stock: 5, created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
+    {
+      id: 2,
+      name: 'USB Keyboard',
+      sku: 'KB-2002',
+      price: 34.99,
+      quantity_in_stock: 5,
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    },
   ],
 }
 
@@ -46,9 +54,12 @@ export const orderHandlers = [
 
   // Get single order
   http.get(`${BASE}/orders/:id`, ({ params }) => {
-    const order = mockOrders.find(o => o.id === Number(params.id))
+    const order = mockOrders.find((o) => o.id === Number(params.id))
     if (!order) {
-      return HttpResponse.json({ error: { code: 'NOT_FOUND', message: 'Order not found', details: {} } }, { status: 404 })
+      return HttpResponse.json(
+        { error: { code: 'NOT_FOUND', message: 'Order not found', details: {} } },
+        { status: 404 },
+      )
     }
     return HttpResponse.json(order)
   }),
@@ -58,16 +69,17 @@ export const orderHandlers = [
     const body = await request.json()
 
     // Simulate insufficient stock
-    if (body.items.some(item => item.quantity > 100)) {
+    if (body.items.some((item) => item.quantity > 100)) {
       return HttpResponse.json(
         {
           error: {
             code: 'CONFLICT',
-            message: 'Insufficient stock for Wireless Mouse (SKU WM-1001). Requested 999, available 50.',
+            message:
+              'Insufficient stock for Wireless Mouse (SKU WM-1001). Requested 999, available 50.',
             details: { product_id: 1, requested: 999, available: 50 },
           },
         },
-        { status: 409 }
+        { status: 409 },
       )
     }
 
@@ -76,7 +88,12 @@ export const orderHandlers = [
       customer_id: body.customer_id,
       status: 'pending',
       total_amount: body.items.reduce((sum, item) => sum + item.quantity * 19.99, 0),
-      items: body.items.map((item, i) => ({ id: 100 + i, ...item, unit_price: 19.99, subtotal: item.quantity * 19.99 })),
+      items: body.items.map((item, i) => ({
+        id: 100 + i,
+        ...item,
+        unit_price: 19.99,
+        subtotal: item.quantity * 19.99,
+      })),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
@@ -88,7 +105,7 @@ export const orderHandlers = [
     if (Number(params.id) === 2) {
       return HttpResponse.json(
         { error: { code: 'CONFLICT', message: 'Order is already cancelled', details: {} } },
-        { status: 409 }
+        { status: 409 },
       )
     }
     return new HttpResponse(null, { status: 204 })

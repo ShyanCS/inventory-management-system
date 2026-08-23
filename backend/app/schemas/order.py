@@ -1,9 +1,8 @@
 """
 Order Pydantic schemas.
 """
+
 from datetime import datetime
-from typing import List
-from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -15,7 +14,7 @@ class OrderItemCreate(BaseModel):
 
 class OrderCreate(BaseModel):
     customer_id: int
-    items: List[OrderItemCreate] = Field(..., min_length=1)
+    items: list[OrderItemCreate] = Field(..., min_length=1)
 
 
 class OrderItemOut(BaseModel):
@@ -33,7 +32,7 @@ class OrderOut(BaseModel):
     customer_id: int
     status: str
     total_amount: float
-    items: List[OrderItemOut]
+    items: list[OrderItemOut]
     created_at: datetime
     updated_at: datetime
 

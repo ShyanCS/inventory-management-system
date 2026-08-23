@@ -2,7 +2,7 @@
  * ProductForm — modal form for creating and editing a product.
  * Handles client-side validation before calling the API.
  */
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 const emptyForm = { name: '', sku: '', price: '', quantity_in_stock: '0' }
 
@@ -22,29 +22,24 @@ function validate(values) {
 }
 
 export default function ProductForm({ product, onSave, onCancel, apiError }) {
-  const [values, setValues] = useState(emptyForm)
+  const [values, setValues] = useState(() =>
+    product
+      ? {
+          name: product.name ?? '',
+          sku: product.sku ?? '',
+          price: product.price ?? '',
+          quantity_in_stock: product.quantity_in_stock ?? 0,
+        }
+      : emptyForm,
+  )
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => {
-    if (product) {
-      setValues({
-        name: product.name ?? '',
-        sku: product.sku ?? '',
-        price: product.price ?? '',
-        quantity_in_stock: product.quantity_in_stock ?? 0,
-      })
-    } else {
-      setValues(emptyForm)
-    }
-    setErrors({})
-  }, [product])
-
   const handleChange = (e) => {
     const { name, value } = e.target
-    setValues(v => ({ ...v, [name]: value }))
+    setValues((v) => ({ ...v, [name]: value }))
     // Clear the error for the field being edited
-    if (errors[name]) setErrors(e => ({ ...e, [name]: undefined }))
+    if (errors[name]) setErrors((e) => ({ ...e, [name]: undefined }))
   }
 
   const handleSubmit = async (e) => {
@@ -74,9 +69,7 @@ export default function ProductForm({ product, onSave, onCancel, apiError }) {
       aria-label={product ? 'Edit Product' : 'Add Product'}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
     >
-      <div
-        className="w-full max-w-md rounded-xl glass-panel shadow-2xl relative overflow-hidden"
-      >
+      <div className="w-full max-w-md rounded-xl glass-panel shadow-2xl relative overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/5 bg-white/[0.02] px-6 py-4">
           <h2 className="text-lg font-bold text-white tracking-tight">
@@ -87,7 +80,13 @@ export default function ProductForm({ product, onSave, onCancel, apiError }) {
             onClick={onCancel}
             className="rounded-lg p-1.5 text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
             </svg>
           </button>
@@ -95,7 +94,10 @@ export default function ProductForm({ product, onSave, onCancel, apiError }) {
 
         {/* API error banner */}
         {apiError && (
-          <div role="alert" className="mx-6 mt-4 glass-card !bg-rose-500/5 !border-rose-500/30 px-4 py-3 text-sm text-rose-400">
+          <div
+            role="alert"
+            className="mx-6 mt-4 glass-card !bg-rose-500/5 !border-rose-500/30 px-4 py-3 text-sm text-rose-400"
+          >
             {apiError}
           </div>
         )}
@@ -146,7 +148,10 @@ export default function ProductForm({ product, onSave, onCancel, apiError }) {
           {/* Price + Quantity row */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="prod-price" className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label
+                htmlFor="prod-price"
+                className="block text-sm font-medium text-slate-300 mb-1.5"
+              >
                 Price ($)
               </label>
               <input
@@ -182,7 +187,9 @@ export default function ProductForm({ product, onSave, onCancel, apiError }) {
                 }`}
                 placeholder="0"
               />
-              {errors.quantity_in_stock && <p className="mt-1.5 text-xs text-rose-400">{errors.quantity_in_stock}</p>}
+              {errors.quantity_in_stock && (
+                <p className="mt-1.5 text-xs text-rose-400">{errors.quantity_in_stock}</p>
+              )}
             </div>
           </div>
 

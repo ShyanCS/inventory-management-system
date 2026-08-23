@@ -1,8 +1,8 @@
 """
 Product Pydantic schemas.
 """
+
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -19,10 +19,10 @@ class ProductCreate(ProductBase):
 
 
 class ProductUpdate(BaseModel):
-    name: Optional[str] = Field(None, max_length=200)
-    sku: Optional[str] = Field(None, max_length=50)
-    price: Optional[float] = Field(None, gt=0)
-    quantity_in_stock: Optional[int] = Field(None, ge=0)
+    name: str | None = Field(None, max_length=200)
+    sku: str | None = Field(None, max_length=50)
+    price: float | None = Field(None, gt=0)
+    quantity_in_stock: int | None = Field(None, ge=0)
 
 
 class ProductOut(ProductBase):

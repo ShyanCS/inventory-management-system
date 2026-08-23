@@ -6,25 +6,47 @@ import { customersApi } from '../api/customers'
 
 export function useCustomers() {
   const [customers, setCustomers] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const fetchCustomers = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const { data } = await customersApi.list()
-      setCustomers(data)
-    } catch (err) {
-      setError(err.response?.data?.error?.message || 'Failed to load customers')
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    let ignore = false
+
+    async function startFetching() {
+      try {
+        const { data } = await customersApi.list()
+        if (!ignore) {
+          setCustomers(data)
+          setError(null)
+        }
+      } catch (err) {
+        if (!ignore) {
+          setError(err.response?.data?.error?.message || 'Failed to load customers')
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false)
+        }
+      }
+    }
+
+    startFetching()
+
+    return () => {
+      ignore = true
     }
   }, [])
 
-  useEffect(() => {
-    fetchCustomers()
-  }, [fetchCustomers])
+  // Refresh the list after mutations (keeps current UI visible while fetching)
+  const fetchCustomers = useCallback(async () => {
+    try {
+      const { data } = await customersApi.list()
+      setCustomers(data)
+      setError(null)
+    } catch (err) {
+      setError(err.response?.data?.error?.message || 'Failed to load customers')
+    }
+  }, [])
 
   const createCustomer = async (customerData) => {
     const { data } = await customersApi.create(customerData)

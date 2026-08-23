@@ -17,9 +17,9 @@ A production-ready, full-stack Inventory and Order Management System built with 
 ## 🏗️ Tech Stack
 
 ### Frontend
-- React 18 + Vite
+- React 19 + Vite
 - React Router DOM for SPA routing
-- Tailwind CSS (v3) for styling
+- Tailwind CSS (v4) for styling
 - Axios for API communication
 - Vitest + React Testing Library + MSW (Mock Service Worker)
 
@@ -57,6 +57,8 @@ The fastest way to run the application is via Docker Compose. This spins up the 
 
 If you prefer to run the services directly on your host machine for development:
 
+> **Environment variables:** copy `backend/.env.example` to `backend/.env` and adjust values as needed. It documents `DATABASE_URL`, `TEST_DATABASE_URL`, and all other supported settings.
+
 ### 1. Database
 Ensure you have a PostgreSQL instance running. Create a database named `inventory` and a user.
 ```sql
@@ -82,7 +84,7 @@ uvicorn app.main:app --reload --port 8000
 ### 3. Frontend
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 The frontend will be available at [http://localhost:5173](http://localhost:5173).

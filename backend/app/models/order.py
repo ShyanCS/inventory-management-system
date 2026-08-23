@@ -18,7 +18,8 @@ OrderItem (junction table):
   - unit_price: NUMERIC(10,2), NOT NULL — snapshot of product price
   - subtotal: NUMERIC(10,2), NOT NULL — quantity * unit_price
 """
-from datetime import datetime, timezone
+
+from datetime import UTC, datetime
 
 from sqlalchemy import CheckConstraint, ForeignKey, Integer, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -44,12 +45,12 @@ class Order(Base):
     total_amount: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         nullable=False,
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
     )
     updated_at: Mapped[datetime] = mapped_column(
         nullable=False,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
 
     # Relationships
@@ -80,13 +81,14 @@ class OrderItem(Base):
     unit_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     subtotal: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
 
-    __table_args__ = (
-        CheckConstraint("quantity > 0", name="ck_order_items_quantity_positive"),
-    )
+    __table_args__ = (CheckConstraint("quantity > 0", name="ck_order_items_quantity_positive"),)
 
     # Relationships
     order = relationship("Order", back_populates="items")
     product = relationship("Product")
 
     def __repr__(self) -> str:
-        return f"<OrderItem(id={self.id}, order_id={self.order_id}, product_id={self.product_id}, qty={self.quantity})>"
+        return (
+            f"<OrderItem(id={self.id}, order_id={self.order_id}, "
+            f"product_id={self.product_id}, qty={self.quantity})>"
+        )

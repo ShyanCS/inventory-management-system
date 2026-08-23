@@ -10,9 +10,23 @@ import { Plus, Edit2, Trash2 } from 'lucide-react'
 
 // Stock badge helper
 function StockBadge({ qty }) {
-  if (qty === 0) return <span className="inline-flex items-center rounded-full bg-rose-500/10 border border-rose-500/20 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-rose-400">Out of Stock</span>
-  if (qty <= 10) return <span className="inline-flex items-center rounded-full bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-amber-400">{qty} left</span>
-  return <span className="inline-flex items-center rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-emerald-400">{qty} in stock</span>
+  if (qty === 0)
+    return (
+      <span className="inline-flex items-center rounded-full bg-rose-500/10 border border-rose-500/20 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-rose-400">
+        Out of Stock
+      </span>
+    )
+  if (qty <= 10)
+    return (
+      <span className="inline-flex items-center rounded-full bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-amber-400">
+        {qty} left
+      </span>
+    )
+  return (
+    <span className="inline-flex items-center rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-emerald-400">
+      {qty} in stock
+    </span>
+  )
 }
 
 export default function ProductsPage() {
@@ -22,6 +36,7 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState(null)
   const [formApiError, setFormApiError] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleteError, setDeleteError] = useState(null)
 
   const openAdd = () => {
     setEditingProduct(null)
@@ -56,10 +71,11 @@ export default function ProductsPage() {
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return
+    setDeleteError(null)
     try {
       await deleteProduct(deleteTarget.id)
     } catch (err) {
-      // Error is captured by useProducts hook
+      setDeleteError(err.response?.data?.error?.message || 'Failed to delete product.')
     } finally {
       setDeleteTarget(null)
     }
@@ -70,7 +86,12 @@ export default function ProductsPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-black tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>Products</h1>
+          <h1
+            className="text-3xl font-bold text-black tracking-tight"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
+            Products
+          </h1>
           <p className="mt-1 text-black/60 font-medium">Manage your inventory catalog</p>
         </div>
         <button
@@ -86,9 +107,24 @@ export default function ProductsPage() {
       {/* Loading state */}
       {loading && (
         <div className="flex items-center justify-center py-20 text-slate-400">
-          <svg className="mr-3 h-6 w-6 animate-spin text-emerald-500" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          <svg
+            className="mr-3 h-6 w-6 animate-spin text-emerald-500"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+            />
           </svg>
           Loading products…
         </div>
@@ -96,8 +132,21 @@ export default function ProductsPage() {
 
       {/* Error state */}
       {!loading && error && (
-        <div role="alert" className="glass-card !border-rose-500/30 !bg-rose-500/5 px-5 py-4 text-sm text-rose-400">
+        <div
+          role="alert"
+          className="glass-card !border-rose-500/30 !bg-rose-500/5 px-5 py-4 text-sm text-rose-400"
+        >
           <span className="font-medium">Error:</span> {error}
+        </div>
+      )}
+
+      {/* Delete error state */}
+      {deleteError && (
+        <div
+          role="alert"
+          className="glass-card !border-rose-500/30 !bg-rose-500/5 px-5 py-4 text-sm text-rose-400"
+        >
+          <span className="font-medium">Error:</span> {deleteError}
         </div>
       )}
 
@@ -113,26 +162,37 @@ export default function ProductsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-black/10 text-left bg-white/40">
-                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-black/60">Product</th>
-                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-black/60">SKU</th>
-                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-black/60">Price</th>
-                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-black/60">Stock</th>
-                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-black/60 text-right">Actions</th>
+                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-black/60">
+                    Product
+                  </th>
+                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-black/60">
+                    SKU
+                  </th>
+                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-black/60">
+                    Price
+                  </th>
+                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-black/60">
+                    Stock
+                  </th>
+                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-black/60 text-right">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/10">
                 {products.map((product) => (
-                  <tr
-                    key={product.id}
-                    className="group hover:bg-white/40 transition-colors"
-                  >
+                  <tr key={product.id} className="group hover:bg-white/40 transition-colors">
                     <td className="px-6 py-4">
                       <span className="font-medium text-black">{product.name}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <code className="rounded text-xs text-black/60 font-mono bg-black/5 px-2 py-1">{product.sku}</code>
+                      <code className="rounded text-xs text-black/60 font-mono bg-black/5 px-2 py-1">
+                        {product.sku}
+                      </code>
                     </td>
-                    <td className="px-6 py-4 text-black/80 font-mono">${Number(product.price).toFixed(2)}</td>
+                    <td className="px-6 py-4 text-black/80 font-mono">
+                      ${Number(product.price).toFixed(2)}
+                    </td>
                     <td className="px-6 py-4">
                       <StockBadge qty={product.quantity_in_stock} />
                     </td>

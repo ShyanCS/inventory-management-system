@@ -1,10 +1,9 @@
 """
 Service layer for Customer business logic.
 """
-from typing import List
 
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictException, NotFoundException
 from app.models.customer import Customer
@@ -20,8 +19,7 @@ class CustomerService:
     def _check_email_exists(self, email: str) -> None:
         if self.repo.get_by_email(email):
             raise ConflictException(
-                message=f"Customer with email '{email}' already exists",
-                details={"email": email}
+                message=f"Customer with email '{email}' already exists", details={"email": email}
             )
 
     def create_customer(self, customer_in: CustomerCreate) -> Customer:
@@ -31,7 +29,9 @@ class CustomerService:
         except IntegrityError as e:
             self.session.rollback()
             if "email" in str(e).lower() or "unique" in str(e).lower():
-                raise ConflictException(message="Customer email already exists", details={"email": customer_in.email})
+                raise ConflictException(
+                    message="Customer email already exists", details={"email": customer_in.email}
+                ) from e
             raise e
 
     def get_customer(self, customer_id: int) -> Customer:
@@ -40,7 +40,7 @@ class CustomerService:
             raise NotFoundException(message=f"Customer with ID {customer_id} not found")
         return customer
 
-    def list_customers(self, skip: int = 0, limit: int = 50) -> List[Customer]:
+    def list_customers(self, skip: int = 0, limit: int = 50) -> list[Customer]:
         return self.repo.list(skip=skip, limit=limit)
 
     def delete_customer(self, customer_id: int) -> None:
@@ -52,4 +52,4 @@ class CustomerService:
             # If referenced by an order
             raise ConflictException(
                 message="Cannot delete customer because they have existing orders."
-            )
+            ) from e

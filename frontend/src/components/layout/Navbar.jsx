@@ -25,11 +25,10 @@ export default function Navbar() {
   return (
     <>
       <header className="fixed top-0 left-0 w-full z-10 px-5 sm:px-8 py-4 sm:py-5 flex justify-between items-center bg-white/70 backdrop-blur-md border-b border-black/5 shadow-sm transition-all">
-        
         {/* Logo (left) */}
         <div className="flex items-center gap-3">
-          <span 
-            className="text-[21px] sm:text-[26px] tracking-tight text-black" 
+          <span
+            className="text-[21px] sm:text-[26px] tracking-tight text-black"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
             InvenTrack&reg;
@@ -43,10 +42,7 @@ export default function Navbar() {
         <nav className="hidden md:flex flex-row text-[23px] text-black">
           {navLinks.map((link, index) => (
             <span key={link.to}>
-              <NavLink 
-                to={link.to} 
-                className="hover:opacity-60 transition-opacity"
-              >
+              <NavLink to={link.to} className="hover:opacity-60 transition-opacity">
                 {link.label}
               </NavLink>
               {index < navLinks.length - 1 && <span className="mx-1">, </span>}
@@ -56,8 +52,8 @@ export default function Navbar() {
 
         {/* Desktop CTA (right) */}
         <div className="hidden md:block">
-          <a 
-            href="mailto:support@inventrack.co" 
+          <a
+            href="mailto:support@inventrack.co"
             className="text-[23px] text-black underline underline-offset-2 hover:opacity-60 transition-opacity"
           >
             Get in touch
@@ -70,43 +66,43 @@ export default function Navbar() {
           onClick={() => setIsOpen(!isOpen)}
           aria-label="Toggle menu"
         >
-          <div 
+          <div
             className={`w-6 h-[2px] bg-black transition-transform duration-300 ${
               isOpen ? 'rotate-45 translate-y-[7px]' : ''
-            }`} 
+            }`}
           />
-          <div 
+          <div
             className={`w-6 h-[2px] bg-black transition-opacity duration-300 ${
               isOpen ? 'opacity-0' : 'opacity-100'
-            }`} 
+            }`}
           />
-          <div 
+          <div
             className={`w-6 h-[2px] bg-black transition-transform duration-300 ${
               isOpen ? '-rotate-45 -translate-y-[7px]' : ''
-            }`} 
+            }`}
           />
         </button>
       </header>
 
       {/* Mobile overlay */}
-      <div 
+      <div
         className={`fixed inset-0 bg-white/95 backdrop-blur-sm z-[9] flex flex-col justify-center px-8 gap-8 transition-opacity duration-300 md:hidden ${
           isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
         <nav className="flex flex-col gap-6">
-          {navLinks.map(link => (
-            <NavLink 
+          {navLinks.map((link) => (
+            <NavLink
               key={link.to}
-              to={link.to} 
+              to={link.to}
               className="text-[32px] font-medium text-black hover:opacity-60 transition-opacity"
               onClick={() => setIsOpen(false)}
             >
               {link.label}
             </NavLink>
           ))}
-          <a 
-            href="mailto:support@inventrack.co" 
+          <a
+            href="mailto:support@inventrack.co"
             className="text-[32px] font-medium text-black underline underline-offset-2 hover:opacity-60 transition-opacity mt-4"
           >
             Get in touch

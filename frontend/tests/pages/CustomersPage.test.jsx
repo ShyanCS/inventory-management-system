@@ -26,8 +26,11 @@ describe('CustomersPage', () => {
   it('shows an error banner when the API fails', async () => {
     server.use(
       http.get('http://localhost:8000/api/v1/customers', () => {
-        return HttpResponse.json({ error: { code: 'INTERNAL_ERROR', message: 'Server error', details: null } }, { status: 500 })
-      })
+        return HttpResponse.json(
+          { error: { code: 'INTERNAL_ERROR', message: 'Server error', details: null } },
+          { status: 500 },
+        )
+      }),
     )
     render(<CustomersPage />)
     await waitFor(() => {

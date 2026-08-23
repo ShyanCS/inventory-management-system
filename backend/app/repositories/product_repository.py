@@ -2,7 +2,6 @@
 Repository layer for Product data access.
 Pure CRUD, no business logic.
 """
-from typing import List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -22,14 +21,16 @@ class ProductRepository:
         self.session.refresh(product)
         return product
 
-    def get_by_id(self, product_id: int) -> Optional[Product]:
+    def get_by_id(self, product_id: int) -> Product | None:
         return self.session.get(Product, product_id)
 
-    def get_by_sku(self, sku: str) -> Optional[Product]:
+    def get_by_sku(self, sku: str) -> Product | None:
         stmt = select(Product).where(Product.sku == sku)
         return self.session.execute(stmt).scalar_one_or_none()
 
-    def list(self, skip: int = 0, limit: int = 50, low_stock: bool = False, threshold: int = 10) -> List[Product]:
+    def list(
+        self, skip: int = 0, limit: int = 50, low_stock: bool = False, threshold: int = 10
+    ) -> list[Product]:
         stmt = select(Product)
         if low_stock:
             stmt = stmt.where(Product.quantity_in_stock <= threshold)
@@ -40,7 +41,7 @@ class ProductRepository:
         update_data = product_in.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(product, field, value)
-        
+
         self.session.commit()
         self.session.refresh(product)
         return product

@@ -11,16 +11,14 @@ import App from '../src/App.jsx'
 describe('App shell', () => {
   it('renders the brand name', () => {
     render(<App />)
-    expect(screen.getByText('InvenTrack')).toBeInTheDocument()
+    expect(screen.getByText(/inventrack/i)).toBeInTheDocument()
   })
 
   it('renders navigation links for all pages', () => {
     render(<App />)
-    const nav = screen.getByTestId('sidebar-nav')
-    expect(nav).toHaveTextContent('Dashboard')
-    expect(nav).toHaveTextContent('Products')
-    expect(nav).toHaveTextContent('Customers')
-    expect(nav).toHaveTextContent('Orders')
+    for (const label of ['Dashboard', 'Products', 'Customers', 'Orders']) {
+      expect(screen.getAllByRole('link', { name: label }).length).toBeGreaterThan(0)
+    }
   })
 
   it('renders the dashboard page by default', () => {

@@ -4,6 +4,7 @@ Application settings loaded from environment variables.
 Uses pydantic-settings to parse and validate configuration.
 All secrets come from env vars — never hardcoded.
 """
+
 from pydantic_settings import BaseSettings
 
 

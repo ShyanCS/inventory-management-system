@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { dashboardApi } from '../api/dashboard'
-import { Package, Users, ShoppingCart, TrendingUp, AlertTriangle } from 'lucide-react'
+import { Package, Users, ShoppingCart, AlertTriangle } from 'lucide-react'
 
 export default function DashboardPage() {
   const navigate = useNavigate()
@@ -17,7 +17,9 @@ export default function DashboardPage() {
     dashboardApi
       .getSummary()
       .then((res) => setSummary(res.data))
-      .catch((err) => setError(err.response?.data?.error?.message || 'Failed to load dashboard data.'))
+      .catch((err) =>
+        setError(err.response?.data?.error?.message || 'Failed to load dashboard data.'),
+      )
       .finally(() => setLoading(false))
   }, [])
 
@@ -72,17 +74,26 @@ export default function DashboardPage() {
         >
           Dashboard
         </h1>
-        <p className="mt-1 text-black/60 font-medium">
-          Your inventory at a glance
-        </p>
+        <p className="mt-1 text-black/60 font-medium">Your inventory at a glance</p>
       </div>
 
       {/* Loading */}
       {loading && (
         <div className="flex items-center justify-center py-20 text-black/50">
           <svg className="mr-3 h-6 w-6 animate-spin text-black" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+            />
           </svg>
           Loading dashboard…
         </div>
@@ -90,7 +101,10 @@ export default function DashboardPage() {
 
       {/* Error */}
       {!loading && error && (
-        <div role="alert" className="glass-card !border-rose-500/30 !bg-rose-500/5 px-5 py-4 text-sm text-rose-600">
+        <div
+          role="alert"
+          className="glass-card !border-rose-500/30 !bg-rose-500/5 px-5 py-4 text-sm text-rose-600"
+        >
           <span className="font-medium">Error:</span> {error}
         </div>
       )}
@@ -111,13 +125,13 @@ export default function DashboardPage() {
                     <span className="text-xs font-semibold uppercase tracking-wider text-black/50">
                       {card.label}
                     </span>
-                    <div className={`w-9 h-9 rounded-lg ${card.bg} ${card.border} border flex items-center justify-center`}>
+                    <div
+                      className={`w-9 h-9 rounded-lg ${card.bg} ${card.border} border flex items-center justify-center`}
+                    >
                       <Icon className={`w-4 h-4 ${card.color}`} />
                     </div>
                   </div>
-                  <p className="text-3xl font-bold text-black tracking-tight">
-                    {card.value}
-                  </p>
+                  <p className="text-3xl font-bold text-black tracking-tight">{card.value}</p>
                 </button>
               )
             })}
@@ -165,9 +179,15 @@ export default function DashboardPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-black/10 bg-white/40">
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-black/50 text-left">Product</th>
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-black/50 text-left">SKU</th>
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-black/50 text-right">Stock</th>
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-black/50 text-left">
+                      Product
+                    </th>
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-black/50 text-left">
+                      SKU
+                    </th>
+                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-black/50 text-right">
+                      Stock
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-black/10">
@@ -176,12 +196,16 @@ export default function DashboardPage() {
                       <td className="px-5 py-3 font-medium text-black">{p.name}</td>
                       <td className="px-5 py-3 font-mono text-xs text-black/60">{p.sku}</td>
                       <td className="px-5 py-3 text-right">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                          p.quantity_in_stock === 0
-                            ? 'bg-rose-500/15 text-rose-600 border border-rose-500/30'
-                            : 'bg-amber-500/15 text-amber-600 border border-amber-500/30'
-                        }`}>
-                          {p.quantity_in_stock === 0 ? 'Out of Stock' : `${p.quantity_in_stock} left`}
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                            p.quantity_in_stock === 0
+                              ? 'bg-rose-500/15 text-rose-600 border border-rose-500/30'
+                              : 'bg-amber-500/15 text-amber-600 border border-amber-500/30'
+                          }`}
+                        >
+                          {p.quantity_in_stock === 0
+                            ? 'Out of Stock'
+                            : `${p.quantity_in_stock} left`}
                         </span>
                       </td>
                     </tr>

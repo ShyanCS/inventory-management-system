@@ -1,7 +1,7 @@
 /**
  * CustomerForm — modal form for creating a new customer.
  */
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 const emptyForm = { full_name: '', email: '', phone: '' }
 
@@ -22,15 +22,10 @@ export default function CustomerForm({ onSave, onCancel, apiError }) {
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => {
-    setValues(emptyForm)
-    setErrors({})
-  }, [])
-
   const handleChange = (e) => {
     const { name, value } = e.target
-    setValues(v => ({ ...v, [name]: value }))
-    if (errors[name]) setErrors(e => ({ ...e, [name]: undefined }))
+    setValues((v) => ({ ...v, [name]: value }))
+    if (errors[name]) setErrors((e) => ({ ...e, [name]: undefined }))
   }
 
   const handleSubmit = async (e) => {
@@ -59,9 +54,7 @@ export default function CustomerForm({ onSave, onCancel, apiError }) {
       aria-label="Add Customer"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
     >
-      <div
-        className="w-full max-w-md rounded-xl glass-panel shadow-2xl overflow-hidden"
-      >
+      <div className="w-full max-w-md rounded-xl glass-panel shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/5 bg-white/[0.02] px-6 py-4">
           <h2 className="text-lg font-bold text-white tracking-tight">Add Customer</h2>
@@ -70,7 +63,13 @@ export default function CustomerForm({ onSave, onCancel, apiError }) {
             onClick={onCancel}
             className="rounded-lg p-1.5 text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
             </svg>
           </button>
@@ -78,7 +77,10 @@ export default function CustomerForm({ onSave, onCancel, apiError }) {
 
         {/* API error banner */}
         {apiError && (
-          <div role="alert" className="mx-6 mt-4 glass-card !bg-rose-500/5 !border-rose-500/30 px-4 py-3 text-sm text-rose-400">
+          <div
+            role="alert"
+            className="mx-6 mt-4 glass-card !bg-rose-500/5 !border-rose-500/30 px-4 py-3 text-sm text-rose-400"
+          >
             {apiError}
           </div>
         )}

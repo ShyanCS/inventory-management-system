@@ -6,13 +6,13 @@ Provides:
 - A test DB session fixture for unit tests.
 - A test client fixture for API tests.
 """
+
 import os
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
-
-import pytest
 
 # Use SQLite in-memory for tests by default (no Postgres required locally).
 # Set TEST_DATABASE_URL env var to use a real Postgres for integration tests.
@@ -28,11 +28,12 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 @pytest.fixture(scope="session", autouse=True)
 def setup_database():
     """Create all tables before the test session, drop them after."""
-    from app.core.database import Base
-    # Import all models so they register with Base.metadata
-    import app.models.product  # noqa: F401
     import app.models.customer  # noqa: F401
     import app.models.order  # noqa: F401
+
+    # Import all models so they register with Base.metadata
+    import app.models.product  # noqa: F401
+    from app.core.database import Base
 
     Base.metadata.create_all(bind=engine)
     yield
@@ -55,6 +56,7 @@ def db_session():
 
     # For SQLite, enable nested transactions (savepoints)
     if "sqlite" in TEST_DATABASE_URL:
+
         @event.listens_for(session, "after_transaction_end")
         def restart_savepoint(session, transaction):
             if transaction.nested and not transaction._parent.nested:
@@ -70,8 +72,8 @@ def db_session():
 @pytest.fixture()
 def client(db_session):
     """Create a test client that uses the test DB session."""
-    from app.main import app
     from app.core.database import get_db
+    from app.main import app
 
     def override_get_db():
         try:
