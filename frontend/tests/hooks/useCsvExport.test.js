@@ -68,7 +68,11 @@ describe('useCsvExport', () => {
     const { result } = renderHook(() => useCsvExport())
 
     await act(async () => {
-      await result.current.exportCsv(() => Promise.reject(new Error('network down')), 'x.csv', 'Failed to export products.')
+      await result.current.exportCsv(
+        () => Promise.reject(new Error('network down')),
+        'x.csv',
+        'Failed to export products.',
+      )
     })
 
     await waitFor(() => expect(result.current.exportError).toBe('Failed to export products.'))
