@@ -8,4 +8,4 @@ psycopg2-binary==2.9.10
 pytest==9.1.1
 pytest-asyncio==1.4.0
 httpx==0.28.1
-email-validator>=2.1.01
+email-validator>=2.3.0
