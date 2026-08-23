@@ -11,6 +11,8 @@ import { useCustomers } from '../hooks/useCustomers'
 import OrderForm from '../components/orders/OrderForm'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import Pagination from '../components/common/Pagination'
+import LoadingSpinner from '../components/common/LoadingSpinner'
+import ErrorBanner from '../components/common/ErrorBanner'
 import { ordersApi } from '../api/orders'
 import { useCsvExport } from '../hooks/useCsvExport'
 import { Plus, XCircle, ChevronDown, Search, Download } from 'lucide-react'
@@ -67,7 +69,11 @@ export default function OrdersPage() {
       date_from: filters.date_from,
       date_to: filters.date_to,
     })
-    return exportCsv(() => ordersApi.exportCsv(filterParams), 'orders.csv', 'Failed to export orders.')
+    return exportCsv(
+      () => ordersApi.exportCsv(filterParams),
+      'orders.csv',
+      'Failed to export orders.',
+    )
   }
 
   const handlePageChange = (nextPage) => {
@@ -146,50 +152,13 @@ export default function OrdersPage() {
       </div>
 
       {/* Export error banner */}
-      {exportError && (
-        <div
-          role="alert"
-          className="glass-card !border-rose-500/30 !bg-rose-500/5 px-5 py-4 text-sm text-rose-400"
-        >
-          <span className="font-medium">Error:</span> {exportError}
-        </div>
-      )}
+      <ErrorBanner message={exportError} />
 
       {/* Loading */}
-      {loading && (
-        <div className="flex items-center justify-center py-20 text-slate-400">
-          <svg
-            className="mr-3 h-6 w-6 animate-spin text-emerald-500"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            />
-          </svg>
-          Loading orders…
-        </div>
-      )}
+      {loading && <LoadingSpinner label="Loading orders…" />}
 
       {/* Error */}
-      {!loading && error && (
-        <div
-          role="alert"
-          className="glass-card !border-rose-500/30 !bg-rose-500/5 px-5 py-4 text-sm text-rose-400"
-        >
-          <span className="font-medium">Error:</span> {error}
-        </div>
-      )}
+      {!loading && <ErrorBanner message={error} />}
 
       {/* Filter toolbar */}
       <div className="glass-card border-black/10 px-5 py-4 flex flex-wrap items-center gap-3">
@@ -241,14 +210,7 @@ export default function OrdersPage() {
       </div>
 
       {/* Cancel error banner */}
-      {cancelError && (
-        <div
-          role="alert"
-          className="glass-card !border-rose-500/30 !bg-rose-500/5 px-5 py-4 text-sm text-rose-400"
-        >
-          <span className="font-medium">Error:</span> {cancelError}
-        </div>
-      )}
+      <ErrorBanner message={cancelError} />
 
       {/* Orders list */}
       {!loading && !error && (
