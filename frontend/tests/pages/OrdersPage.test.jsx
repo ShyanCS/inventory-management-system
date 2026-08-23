@@ -1,7 +1,7 @@
 /**
  * Phase 10 — Orders Page Tests (TDD Red → Green)
  */
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect } from 'vitest'
 import { http, HttpResponse } from 'msw'
@@ -161,5 +161,91 @@ describe('OrdersPage', () => {
     await waitFor(() => {
       expect(screen.getByText(/cannot be cancelled/i)).toBeInTheDocument()
     })
+  })
+})
+
+describe('OrdersPage filters', () => {
+  it('requests and renders orders filtered by status', async () => {
+    const user = userEvent.setup()
+    let requestedUrl = ''
+    server.use(
+      http.get('http://localhost:8000/api/v1/orders', ({ request }) => {
+        requestedUrl = request.url
+        return HttpResponse.json([
+          {
+            id: 7,
+            customer_id: 1,
+            status: 'completed',
+            total_amount: 19.99,
+            items: [],
+            created_at: '2026-01-15T10:00:00Z',
+            updated_at: '2026-01-15T10:00:00Z',
+          },
+        ])
+      }),
+    )
+    render(<OrdersPage />)
+    await waitFor(() => screen.getByText('#7'))
+
+    await user.selectOptions(screen.getByLabelText(/filter by status/i), 'pending')
+
+    await waitFor(() => {
+      expect(requestedUrl).toContain('status=pending')
+    })
+  })
+
+  it('debounces search input into a q param request', async () => {
+    const user = userEvent.setup()
+    let requestedUrl = ''
+    server.use(
+      http.get('http://localhost:8000/api/v1/orders', ({ request }) => {
+        requestedUrl = request.url
+        return HttpResponse.json([])
+      }),
+    )
+    render(<OrdersPage />)
+    const searchInput = await screen.findByLabelText(/search orders/i)
+
+    await user.type(searchInput, 'Alice')
+
+    await waitFor(
+      () => {
+        expect(requestedUrl).toContain('q=Alice')
+      },
+      { timeout: 1500 },
+    )
+    expect(screen.getByText(/no orders match your filters/i)).toBeInTheDocument()
+  })
+
+  it('shows a validation message for an inverted date range without calling the API', async () => {
+    const user = userEvent.setup()
+    let callCount = 0
+    server.use(
+      http.get('http://localhost:8000/api/v1/orders', () => {
+        callCount++
+        return HttpResponse.json([])
+      }),
+    )
+    render(<OrdersPage />)
+    await screen.findByLabelText(/from date/i)
+    await waitFor(() => expect(callCount).toBe(1))
+
+    // Setting the From date alone is a valid state -> exactly one more request
+    fireEvent.change(screen.getByLabelText(/from date/i), { target: { value: '2026-05-01' } })
+    await waitFor(() => expect(callCount).toBe(2))
+    const callsAfterLoad = callCount
+
+    // Inverted range -> validation message, no additional API call
+    const toDate = screen.getByLabelText(/to date/i)
+    fireEvent.change(toDate, { target: { value: '2026-01-01' } })
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/must be on or after/i)
+    expect(callCount).toBe(callsAfterLoad)
+  })
+
+  it('shows the default empty state when no filters are active', async () => {
+    server.use(http.get('http://localhost:8000/api/v1/orders', () => HttpResponse.json([])))
+    render(<OrdersPage />)
+    expect(await screen.findByText(/no orders yet/i)).toBeInTheDocument()
   })
 })

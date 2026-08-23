@@ -1,14 +1,15 @@
 /**
  * OrdersPage — full order management page.
  * Shows order list with status badges, line item details, and cancel action.
+ * Supports filtering by status/date range and debounced search.
  */
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useOrders } from '../hooks/useOrders'
 import { useProducts } from '../hooks/useProducts'
 import { useCustomers } from '../hooks/useCustomers'
 import OrderForm from '../components/orders/OrderForm'
 import ConfirmDialog from '../components/common/ConfirmDialog'
-import { Plus, XCircle, ChevronDown } from 'lucide-react'
+import { Plus, XCircle, ChevronDown, Search } from 'lucide-react'
 
 const STATUS_STYLES = {
   pending: 'bg-amber-500/20 text-amber-600 border border-amber-500/30',
@@ -27,7 +28,7 @@ function StatusBadge({ status }) {
 }
 
 export default function OrdersPage() {
-  const { orders, loading, error, createOrder, cancelOrder } = useOrders()
+  const { orders, loading, error, createOrder, cancelOrder, fetchOrders } = useOrders()
   const { products } = useProducts()
   const { customers } = useCustomers()
 
@@ -36,6 +37,42 @@ export default function OrdersPage() {
   const [cancelTarget, setCancelTarget] = useState(null)
   const [cancelError, setCancelError] = useState(null)
   const [expandedOrder, setExpandedOrder] = useState(null)
+
+  // Filter state: '' means "no filter" for that field
+  const [filters, setFilters] = useState({ status: '', date_from: '', date_to: '', q: '' })
+  const [dateError, setDateError] = useState(null)
+  const searchTimeoutRef = useRef(null)
+
+  // Build a params object with empty filters removed
+  const buildParams = (f) =>
+    Object.fromEntries(Object.entries(f).filter(([, value]) => value !== ''))
+
+  const handleStatusChange = (status) => {
+    const next = { ...filters, status }
+    setFilters(next)
+    fetchOrders(buildParams(next))
+  }
+
+  const handleDateChange = (field, value) => {
+    const next = { ...filters, [field]: value }
+    setFilters(next)
+    if (next.date_from && next.date_to && next.date_to < next.date_from) {
+      setDateError('"To" date must be on or after the "From" date.')
+      return
+    }
+    setDateError(null)
+    fetchOrders(buildParams(next))
+  }
+
+  // Debounced search — schedules the fetch without an effect
+  const handleSearchChange = (q) => {
+    const next = { ...filters, q }
+    setFilters(next)
+    clearTimeout(searchTimeoutRef.current)
+    searchTimeoutRef.current = setTimeout(() => fetchOrders(buildParams(next)), 300)
+  }
+
+  const hasActiveFilters = Object.values(filters).some((value) => value !== '')
 
   // Build customer lookup map
   const customerMap = Object.fromEntries(customers.map((c) => [c.id, c]))
@@ -131,6 +168,55 @@ export default function OrdersPage() {
         </div>
       )}
 
+      {/* Filter toolbar */}
+      <div className="glass-card border-black/10 px-5 py-4 flex flex-wrap items-center gap-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black/40" />
+          <input
+            type="search"
+            aria-label="Search orders"
+            placeholder="Search by order # or customer"
+            value={filters.q}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="glass-input rounded-lg pl-9 pr-3 py-2 text-sm text-black w-64 placeholder-black/40"
+          />
+        </div>
+
+        <select
+          aria-label="Filter by status"
+          value={filters.status}
+          onChange={(e) => handleStatusChange(e.target.value)}
+          className="glass-input rounded-lg px-3 py-2 text-sm text-black"
+        >
+          <option value="">All statuses</option>
+          <option value="pending">Pending</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+
+        <input
+          type="date"
+          aria-label="From date"
+          value={filters.date_from}
+          onChange={(e) => handleDateChange('date_from', e.target.value)}
+          className="glass-input rounded-lg px-3 py-2 text-sm text-black"
+        />
+        <span className="text-black/40 text-sm">to</span>
+        <input
+          type="date"
+          aria-label="To date"
+          value={filters.date_to}
+          onChange={(e) => handleDateChange('date_to', e.target.value)}
+          className="glass-input rounded-lg px-3 py-2 text-sm text-black"
+        />
+
+        {dateError && (
+          <p role="alert" className="text-xs text-rose-500 font-medium">
+            {dateError}
+          </p>
+        )}
+      </div>
+
       {/* Cancel error banner */}
       {cancelError && (
         <div
@@ -145,10 +231,17 @@ export default function OrdersPage() {
       {!loading && !error && (
         <div className="space-y-3">
           {orders.length === 0 ? (
-            <div className="glass-panel border-black/10 py-20 text-center text-black/60">
-              <p className="text-lg font-medium text-black">No orders yet</p>
-              <p className="mt-1 text-sm">Click "New Order" to place the first order.</p>
-            </div>
+            hasActiveFilters ? (
+              <div className="glass-panel border-black/10 py-20 text-center text-black/60">
+                <p className="text-lg font-medium text-black">No orders match your filters</p>
+                <p className="mt-1 text-sm">Try adjusting the status, dates, or search term.</p>
+              </div>
+            ) : (
+              <div className="glass-panel border-black/10 py-20 text-center text-black/60">
+                <p className="text-lg font-medium text-black">No orders yet</p>
+                <p className="mt-1 text-sm">Click "New Order" to place the first order.</p>
+              </div>
+            )
           ) : (
             orders.map((order) => {
               const customer = customerMap[order.customer_id]

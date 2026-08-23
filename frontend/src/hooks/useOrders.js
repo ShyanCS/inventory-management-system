@@ -1,13 +1,15 @@
 /**
  * useOrders — custom hook for order data management.
  */
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { ordersApi } from '../api/orders'
 
 export function useOrders() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  // Latest active filters, so post-mutation refreshes preserve them
+  const filtersRef = useRef({})
 
   useEffect(() => {
     let ignore = false
@@ -37,10 +39,12 @@ export function useOrders() {
     }
   }, [])
 
-  // Refresh the list after mutations (keeps current UI visible while fetching)
-  const fetchOrders = useCallback(async () => {
+  // Fetch with optional filter params; remembers the latest params so
+  // refreshes after mutations keep the active filters applied.
+  const fetchOrders = useCallback(async (params) => {
+    if (params !== undefined) filtersRef.current = params
     try {
-      const { data } = await ordersApi.list()
+      const { data } = await ordersApi.list(params ?? filtersRef.current)
       setOrders(data)
       setError(null)
     } catch (err) {
