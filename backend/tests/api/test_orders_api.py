@@ -259,7 +259,10 @@ def test_order_export_row_per_item_with_repeated_order_fields(client):
 
     response = client.get("/api/v1/orders/export")
     lines = response.text.strip().splitlines()
-    header = "order_id,status,customer_name,created_at,item_id,product_sku,item_quantity,unit_price,item_subtotal,order_total"
+    header = (
+        "order_id,status,customer_name,created_at,item_id,product_sku,"
+        "item_quantity,unit_price,item_subtotal,order_total"
+    )
     assert lines[0] == header
 
     order_rows = [line for line in lines[1:] if line.startswith(f"{order['id']},")]
