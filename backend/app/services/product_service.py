@@ -42,9 +42,9 @@ class ProductService:
         return product
 
     def list_products(
-        self, skip: int = 0, limit: int = 50, low_stock: bool = False, threshold: int = 10
+        self, skip: int = 0, limit: int = 50, low_stock: bool = False
     ) -> list[Product]:
-        return self.repo.list(skip=skip, limit=limit, low_stock=low_stock, threshold=threshold)
+        return self.repo.list(skip=skip, limit=limit, low_stock=low_stock)
 
     def update_product(self, product_id: int, product_in: ProductUpdate) -> Product:
         product = self.get_product(product_id)

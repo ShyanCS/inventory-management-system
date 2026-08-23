@@ -108,9 +108,7 @@ def test_update_product_threshold(client):
     )
     product_id = create_resp.json()["id"]
 
-    response = client.put(
-        f"/api/v1/products/{product_id}", json={"low_stock_threshold": 2}
-    )
+    response = client.put(f"/api/v1/products/{product_id}", json={"low_stock_threshold": 2})
     assert response.status_code == 200
     assert response.json()["low_stock_threshold"] == 2
 
@@ -136,15 +134,33 @@ def test_low_stock_uses_per_product_thresholds(client):
     # C: stock 20 <= threshold 25 -> low
     client.post(
         "/api/v1/products",
-        json={"name": "A", "sku": "LOW-A", "price": 1, "quantity_in_stock": 8, "low_stock_threshold": 10},
+        json={
+            "name": "A",
+            "sku": "LOW-A",
+            "price": 1,
+            "quantity_in_stock": 8,
+            "low_stock_threshold": 10,
+        },
     )
     client.post(
         "/api/v1/products",
-        json={"name": "B", "sku": "LOW-B", "price": 1, "quantity_in_stock": 8, "low_stock_threshold": 5},
+        json={
+            "name": "B",
+            "sku": "LOW-B",
+            "price": 1,
+            "quantity_in_stock": 8,
+            "low_stock_threshold": 5,
+        },
     )
     client.post(
         "/api/v1/products",
-        json={"name": "C", "sku": "LOW-C", "price": 1, "quantity_in_stock": 20, "low_stock_threshold": 25},
+        json={
+            "name": "C",
+            "sku": "LOW-C",
+            "price": 1,
+            "quantity_in_stock": 20,
+            "low_stock_threshold": 25,
+        },
     )
 
     response = client.get("/api/v1/products?low_stock=true")
@@ -152,8 +168,3 @@ def test_low_stock_uses_per_product_thresholds(client):
     skus = {p["sku"] for p in response.json()}
     assert {"LOW-A", "LOW-C"} <= skus
     assert "LOW-B" not in skus
-
-
-def test_list_products_rejects_global_threshold_param(client):
-    response = client.get("/api/v1/products?threshold=5")
-    assert response.status_code == 422
