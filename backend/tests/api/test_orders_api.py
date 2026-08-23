@@ -223,3 +223,89 @@ def test_list_orders_total_respects_filters(client):
     assert pending["id"] in ids
     assert cancelled["id"] not in ids
     assert body["total"] == len(body["items"])
+
+
+def test_order_export_content_type_and_disposition(client):
+    response = client.get("/api/v1/orders/export")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/csv")
+    disposition = response.headers["content-disposition"]
+    assert "attachment" in disposition
+    assert "orders_" in disposition
+
+
+def test_order_export_row_per_item_with_repeated_order_fields(client):
+    cust_id = client.post(
+        "/api/v1/customers", json={"full_name": "Csv Cust", "email": "csv@c.com", "phone": "1"}
+    ).json()["id"]
+    p1 = client.post(
+        "/api/v1/products",
+        json={"name": "P1", "sku": "CSV-SKU1", "price": 10.0, "quantity_in_stock": 9},
+    ).json()
+    p2 = client.post(
+        "/api/v1/products",
+        json={"name": "P2", "sku": "CSV-SKU2", "price": 20.0, "quantity_in_stock": 9},
+    ).json()
+    order = client.post(
+        "/api/v1/orders",
+        json={
+            "customer_id": cust_id,
+            "items": [
+                {"product_id": p1["id"], "quantity": 2},
+                {"product_id": p2["id"], "quantity": 1},
+            ],
+        },
+    ).json()
+
+    response = client.get("/api/v1/orders/export")
+    lines = response.text.strip().splitlines()
+    header = (
+        "order_id,status,customer_name,created_at,item_id,product_sku,"
+        "item_quantity,unit_price,item_subtotal,order_total"
+    )
+    assert lines[0] == header
+
+    order_rows = [line for line in lines[1:] if line.startswith(f"{order['id']},")]
+    assert len(order_rows) == 2  # one row per line item
+    # Order-level fields repeat on each item row
+    assert all("pending" in row for row in order_rows)
+    assert all("CSV-SKU1" in row or "CSV-SKU2" in row for row in order_rows)
+
+
+def test_order_export_respects_status_filter(client):
+    _setup_order(client, "oe1@c.com", "OE-SKU1", status="cancelled")
+    kept = _setup_order(client, "oe2@c.com", "OE-SKU2")
+
+    response = client.get("/api/v1/orders/export?status=pending")
+    body = response.text
+    assert f"{kept['id']}," in body
+    # cancelled orders excluded
+    lines = body.strip().splitlines()
+    assert all(",cancelled," not in line for line in lines[1:])
+
+
+def test_order_export_respects_date_range_filter(client):
+    order = _setup_order(client, "oe3@c.com", "OE-SKU3")
+    created_date = order["created_at"][:10]
+
+    inside = client.get(f"/api/v1/orders/export?date_from={created_date}&date_to={created_date}")
+    assert f"{order['id']}," in inside.text
+
+    outside = client.get("/api/v1/orders/export?date_from=2020-01-01&date_to=2020-01-02")
+    rows = outside.text.strip().splitlines()
+    assert len(rows) == 1  # header only
+
+
+def test_order_export_customer_names_resolved(client):
+    _setup_order(client, "oe4@c.com", "OE-SKU4")
+
+    response = client.get("/api/v1/orders/export")
+    assert "Alice" in response.text
+
+
+def test_get_order_still_works_after_export_route_added(client):
+    order = _setup_order(client, "oe5@c.com", "OE-SKU5")
+
+    response = client.get(f"/api/v1/orders/{order['id']}")
+    assert response.status_code == 200
+    assert response.json()["id"] == order["id"]

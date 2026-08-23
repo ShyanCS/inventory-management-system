@@ -16,3 +16,19 @@ export function downloadBlobResponse(response, fallbackName = 'download.csv') {
   link.remove()
   URL.revokeObjectURL(url)
 }
+
+/**
+ * Extracts the API error envelope message from an axios error whose
+ * response body may be a raw string (CSV endpoints) or a parsed object.
+ */
+export function apiErrorMessage(err, fallback) {
+  const detail = err.response?.data
+  if (typeof detail === 'string') {
+    try {
+      return JSON.parse(detail)?.error?.message || fallback
+    } catch {
+      return fallback
+    }
+  }
+  return detail?.error?.message || fallback
+}

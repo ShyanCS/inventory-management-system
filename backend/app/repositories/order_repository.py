@@ -10,7 +10,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.customer import Customer
-from app.models.order import Order
+from app.models.order import Order, OrderItem
 
 
 class OrderRepository:
@@ -83,6 +83,31 @@ class OrderRepository:
             self._filtered_stmt(customer_id, status, date_from, date_to, q).subquery()
         )
         return self.session.execute(stmt).scalar_one()
+
+    def list_for_export(
+        self,
+        customer_id: int | None = None,
+        status: str | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+    ) -> list[Order]:
+        """All matching orders regardless of pagination, with items and
+        customers eagerly loaded, for CSV export. Search (q) is intentionally
+        not supported for exports."""
+        stmt = (
+            self._filtered_stmt(
+                customer_id=customer_id,
+                status=status,
+                date_from=date_from,
+                date_to=date_to,
+            )
+            .options(
+                joinedload(Order.items).joinedload(OrderItem.product),
+                joinedload(Order.customer),
+            )
+            .order_by(Order.id)
+        )
+        return list(self.session.execute(stmt).scalars().unique().all())
 
     def update(self, order: Order) -> Order:
         self.session.commit()

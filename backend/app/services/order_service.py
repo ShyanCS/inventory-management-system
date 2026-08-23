@@ -3,7 +3,10 @@ Service layer for Order business logic.
 Handles atomic decrement, stock validation, total calculation, and restocking on cancellation.
 """
 
+import csv
 from datetime import date
+from decimal import Decimal
+from io import StringIO
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -18,6 +21,19 @@ from app.models.order import Order, OrderItem
 from app.models.product import Product
 from app.repositories.order_repository import OrderRepository
 from app.schemas.order import OrderCreate
+
+ORDER_CSV_HEADERS = [
+    "order_id",
+    "status",
+    "customer_name",
+    "created_at",
+    "item_id",
+    "product_sku",
+    "item_quantity",
+    "unit_price",
+    "item_subtotal",
+    "order_total",
+]
 
 
 class OrderService:
@@ -42,10 +58,15 @@ class OrderService:
 
             product_map = {p.id: p for p in products}
 
-            # Ensure all products exist
+            # Ensure all products exist and are not soft-deleted
             for item in order_in.items:
                 if item.product_id not in product_map:
                     raise NotFoundException(message=f"Product {item.product_id} not found")
+                if product_map[item.product_id].is_deleted:
+                    raise ConflictException(
+                        message=f"Product {item.product_id} is no longer available",
+                        details={"product_id": item.product_id},
+                    )
 
             # Validate stock for all items BEFORE decrementing anything (Rule 4)
             for item in order_in.items:
@@ -62,8 +83,6 @@ class OrderService:
                             "available": product.quantity_in_stock,
                         },
                     )
-
-            from decimal import Decimal
 
             # Create Order
             new_order = Order(
@@ -128,6 +147,41 @@ class OrderService:
             "q": q,
         }
         return self.repo.list(skip=skip, limit=limit, **filters), self.repo.count(**filters)
+
+    def export_csv(
+        self,
+        status: str | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+    ) -> str:
+        """Render all matching orders as flat CSV text, one row per line item
+        (ignores pagination; search is not supported for exports)."""
+        if date_from and date_to and date_to < date_from:
+            raise UnprocessableException(message="date_to must be on or after date_from")
+
+        orders = self.repo.list_for_export(status=status, date_from=date_from, date_to=date_to)
+
+        buffer = StringIO()
+        writer = csv.writer(buffer)
+        writer.writerow(ORDER_CSV_HEADERS)
+        for order in orders:
+            customer_name = order.customer.full_name if order.customer else ""
+            for item in sorted(order.items, key=lambda i: i.id):
+                writer.writerow(
+                    [
+                        order.id,
+                        order.status,
+                        customer_name,
+                        order.created_at.isoformat(),
+                        item.id,
+                        item.product.sku if item.product else "",
+                        item.quantity,
+                        f"{item.unit_price:.2f}",
+                        f"{item.subtotal:.2f}",
+                        f"{order.total_amount:.2f}",
+                    ]
+                )
+        return buffer.getvalue()
 
     def cancel_order(self, order_id: int) -> Order:
         order = self.get_order(order_id)

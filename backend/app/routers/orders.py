@@ -2,10 +2,10 @@
 API router for Orders.
 """
 
-from datetime import date
+from datetime import UTC, date, datetime
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -48,6 +48,23 @@ def list_orders(
         q=q,
     )
     return Page(items=items, total=total, skip=skip, limit=limit)
+
+
+# NOTE: declared before /{order_id} so "export" is not parsed as an id
+@router.get("/export")
+def export_orders(
+    order_status: OrderStatus | None = Query(None, alias="status"),
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
+    service: OrderService = Depends(get_order_service),
+):
+    csv_text = service.export_csv(status=order_status, date_from=date_from, date_to=date_to)
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M")
+    return Response(
+        content=csv_text,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="orders_{timestamp}.csv"'},
+    )
 
 
 @router.get("/{order_id}", response_model=OrderOut)
