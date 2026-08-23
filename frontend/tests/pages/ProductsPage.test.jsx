@@ -4,7 +4,7 @@
  */
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { http, HttpResponse } from 'msw'
 import { server } from '../mocks/server'
 import ProductsPage from '../../src/pages/ProductsPage'
@@ -301,5 +301,56 @@ describe('ProductsPage pagination', () => {
       expect(requestedUrl).toContain('skip=10')
     })
     await waitFor(() => screen.getByText('Product 11'))
+  })
+})
+
+describe('ProductsPage CSV export', () => {
+  it('downloads the CSV when Export is clicked', async () => {
+    const user = userEvent.setup()
+    const createObjectURL = vi.fn(() => 'blob:mock')
+    const revokeObjectURL = vi.fn()
+    Object.defineProperty(URL, 'createObjectURL', { value: createObjectURL, configurable: true })
+    Object.defineProperty(URL, 'revokeObjectURL', { value: revokeObjectURL, configurable: true })
+    server.use(
+      http.get('http://localhost:8000/api/v1/products/export', () => {
+        return new HttpResponse('id,name,sku\n1,Wireless Mouse,WM-1001\n', {
+          headers: {
+            'Content-Type': 'text/csv; charset=utf-8',
+            'Content-Disposition': 'attachment; filename="products_20260823_1200.csv"',
+          },
+        })
+      }),
+    )
+    render(<ProductsPage />)
+    await waitFor(() => screen.getByText('Wireless Mouse'))
+
+    await user.click(screen.getByRole('button', { name: /export csv/i }))
+
+    await waitFor(() => {
+      expect(createObjectURL).toHaveBeenCalledTimes(1)
+    })
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock')
+  })
+
+  it('shows an error banner when the export fails', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.get('http://localhost:8000/api/v1/products/export', () => {
+        return HttpResponse.json(
+          {
+            error: { code: 'INTERNAL_ERROR', message: 'Export failed on the server', details: {} },
+          },
+          { status: 500 },
+        )
+      }),
+    )
+    render(<ProductsPage />)
+    await waitFor(() => screen.getByText('Wireless Mouse'))
+
+    await user.click(screen.getByRole('button', { name: /export csv/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText(/export failed on the server/i)).toBeInTheDocument()
+    })
   })
 })

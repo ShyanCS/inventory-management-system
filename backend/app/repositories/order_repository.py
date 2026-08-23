@@ -2,6 +2,8 @@
 Repository layer for Order data access.
 """
 
+from __future__ import annotations
+
 from datetime import date
 
 from sqlalchemy import func, or_, select

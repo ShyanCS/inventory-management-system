@@ -4,10 +4,12 @@
  */
 import { useState } from 'react'
 import { useProducts } from '../hooks/useProducts'
+import { productsApi } from '../api/products'
+import { downloadBlobResponse } from '../api/download'
 import ProductForm from '../components/products/ProductForm'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import Pagination from '../components/common/Pagination'
-import { Plus, Edit2, Trash2 } from 'lucide-react'
+import { Plus, Edit2, Trash2, Download } from 'lucide-react'
 
 const PAGE_SIZE = 10
 
@@ -50,10 +52,36 @@ export default function ProductsPage() {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteError, setDeleteError] = useState(null)
   const [page, setPage] = useState(1)
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState(null)
 
   const handlePageChange = (nextPage) => {
     setPage(nextPage)
     fetchProducts({ skip: (nextPage - 1) * PAGE_SIZE, limit: PAGE_SIZE })
+  }
+
+  const handleExport = async () => {
+    setExportError(null)
+    setExporting(true)
+    try {
+      const response = await productsApi.exportCsv()
+      downloadBlobResponse(response, 'products.csv')
+    } catch (err) {
+      let message
+      const detail = err.response?.data
+      if (typeof detail === 'string') {
+        try {
+          message = JSON.parse(detail)?.error?.message
+        } catch {
+          message = undefined
+        }
+      } else {
+        message = detail?.error?.message
+      }
+      setExportError(message || 'Failed to export products.')
+    } finally {
+      setExporting(false)
+    }
   }
 
   const openAdd = () => {
@@ -112,15 +140,36 @@ export default function ProductsPage() {
           </h1>
           <p className="mt-1 text-black/60 font-medium">Manage your inventory catalog</p>
         </div>
-        <button
-          id="add-product-btn"
-          onClick={openAdd}
-          className="flex items-center gap-2 rounded-lg bg-black text-white px-4 py-2 text-sm font-medium border border-black/10 hover:bg-black/80 transition-all"
-        >
-          <Plus className="h-4 w-4" />
-          Add Product
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            aria-label="Export CSV"
+            className="flex items-center gap-2 rounded-lg bg-white/70 text-black px-4 py-2 text-sm font-medium border border-black/10 hover:bg-white transition-all disabled:opacity-50"
+          >
+            <Download className="h-4 w-4" />
+            {exporting ? 'Exporting…' : 'Export CSV'}
+          </button>
+          <button
+            id="add-product-btn"
+            onClick={openAdd}
+            className="flex items-center gap-2 rounded-lg bg-black text-white px-4 py-2 text-sm font-medium border border-black/10 hover:bg-black/80 transition-all"
+          >
+            <Plus className="h-4 w-4" />
+            Add Product
+          </button>
+        </div>
       </div>
+
+      {/* Export error banner */}
+      {exportError && (
+        <div
+          role="alert"
+          className="glass-card !border-rose-500/30 !bg-rose-500/5 px-5 py-4 text-sm text-rose-400"
+        >
+          <span className="font-medium">Error:</span> {exportError}
+        </div>
+      )}
 
       {/* Loading state */}
       {loading && (

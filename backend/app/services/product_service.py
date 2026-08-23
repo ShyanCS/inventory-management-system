@@ -2,6 +2,9 @@
 Service layer for Product business logic.
 """
 
+import csv
+from io import StringIO
+
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -9,6 +12,16 @@ from app.core.exceptions import ConflictException, NotFoundException
 from app.models.product import Product
 from app.repositories.product_repository import ProductRepository
 from app.schemas.product import ProductCreate, ProductUpdate
+
+CSV_HEADERS = [
+    "id",
+    "name",
+    "sku",
+    "price",
+    "quantity_in_stock",
+    "low_stock_threshold",
+    "created_at",
+]
 
 
 class ProductService:
@@ -48,6 +61,25 @@ class ProductService:
             self.repo.list(skip=skip, limit=limit, low_stock=low_stock),
             self.repo.count(low_stock=low_stock),
         )
+
+    def export_csv(self, low_stock: bool = False) -> str:
+        """Render all matching products as CSV text (ignores pagination)."""
+        buffer = StringIO()
+        writer = csv.writer(buffer)
+        writer.writerow(CSV_HEADERS)
+        for product in self.repo.list_for_export(low_stock=low_stock):
+            writer.writerow(
+                [
+                    product.id,
+                    product.name,
+                    product.sku,
+                    f"{product.price:.2f}",
+                    product.quantity_in_stock,
+                    product.low_stock_threshold,
+                    product.created_at.isoformat(),
+                ]
+            )
+        return buffer.getvalue()
 
     def update_product(self, product_id: int, product_in: ProductUpdate) -> Product:
         product = self.get_product(product_id)

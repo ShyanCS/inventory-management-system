@@ -190,3 +190,65 @@ def test_low_stock_uses_per_product_thresholds(client):
     skus = {p["sku"] for p in response.json()["items"]}
     assert {"LOW-A", "LOW-C"} <= skus
     assert "LOW-B" not in skus
+
+
+def test_export_returns_csv_content_type_and_disposition(client):
+    response = client.get("/api/v1/products/export")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/csv")
+    disposition = response.headers["content-disposition"]
+    assert "attachment" in disposition
+    assert "products_" in disposition
+    assert disposition.rstrip('"').endswith(".csv") or ".csv" in disposition
+
+
+def test_export_contains_header_and_all_products(client):
+    client.post("/api/v1/products", json={"name": "Exp One", "sku": "EXP-001", "price": 5})
+    client.post("/api/v1/products", json={"name": "Exp Two", "sku": "EXP-002", "price": 7.5})
+
+    response = client.get("/api/v1/products/export")
+    lines = response.text.strip().splitlines()
+    assert lines[0] == "id,name,sku,price,quantity_in_stock,low_stock_threshold,created_at"
+    skus = ",".join(lines)
+    assert "EXP-001" in skus
+    assert "EXP-002" in skus
+
+
+def test_export_respects_low_stock_filter(client):
+    client.post(
+        "/api/v1/products",
+        json={"name": "Stocked", "sku": "EXPL-001", "price": 5, "quantity_in_stock": 100},
+    )
+    client.post(
+        "/api/v1/products",
+        json={"name": "Scarce", "sku": "EXPL-002", "price": 5, "quantity_in_stock": 2},
+    )
+
+    response = client.get("/api/v1/products/export?low_stock=true")
+    body = response.text
+    assert "EXPL-002" in body
+    assert "EXPL-001" not in body
+
+
+def test_export_ignores_pagination_params(client):
+    for i in range(4):
+        client.post(
+            "/api/v1/products",
+            json={"name": f"Bulk {i}", "sku": f"EXPB-{i}", "price": 5},
+        )
+
+    response = client.get("/api/v1/products/export?skip=0&limit=2")
+    rows = response.text.strip().splitlines()
+    # header + all 4 products despite limit=2
+    assert len(rows) >= 5
+
+
+def test_get_product_still_works_after_export_route_added(client):
+    create_resp = client.post(
+        "/api/v1/products", json={"name": "Route Check", "sku": "RT-001", "price": 5}
+    )
+    product_id = create_resp.json()["id"]
+
+    response = client.get(f"/api/v1/products/{product_id}")
+    assert response.status_code == 200
+    assert response.json()["name"] == "Route Check"

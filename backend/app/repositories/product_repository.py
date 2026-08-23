@@ -3,6 +3,8 @@ Repository layer for Product data access.
 Pure CRUD, no business logic.
 """
 
+from __future__ import annotations
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -41,6 +43,11 @@ class ProductRepository:
     def count(self, low_stock: bool = False) -> int:
         stmt = select(func.count()).select_from(self._filtered_stmt(low_stock).subquery())
         return self.session.execute(stmt).scalar_one()
+
+    def list_for_export(self, low_stock: bool = False) -> list[Product]:
+        """All matching products regardless of pagination, for CSV export."""
+        stmt = self._filtered_stmt(low_stock).order_by(Product.id)
+        return list(self.session.execute(stmt).scalars().all())
 
     def update(self, product: Product, product_in: ProductUpdate) -> Product:
         update_data = product_in.model_dump(exclude_unset=True)
