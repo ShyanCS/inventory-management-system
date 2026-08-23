@@ -76,7 +76,7 @@ def test_get_order(client):
 def test_list_orders(client):
     response = client.get("/api/v1/orders")
     assert response.status_code == 200
-    assert isinstance(response.json(), list)
+    assert isinstance(response.json()["items"], list)
 
 
 def test_cancel_order(client):
@@ -131,12 +131,14 @@ def test_list_orders_filter_by_status(client):
 
     response = client.get("/api/v1/orders?status=pending")
     assert response.status_code == 200
-    assert all(o["status"] == "pending" for o in response.json())
-    assert len(response.json()) >= 1
+    body = response.json()
+    assert set(body.keys()) == {"items", "total", "skip", "limit"}
+    assert all(o["status"] == "pending" for o in body["items"])
+    assert len(body["items"]) >= 1
 
     response = client.get("/api/v1/orders?status=cancelled")
     assert response.status_code == 200
-    assert all(o["status"] == "cancelled" for o in response.json())
+    assert all(o["status"] == "cancelled" for o in response.json()["items"])
 
 
 def test_list_orders_rejects_invalid_status(client):
@@ -150,7 +152,7 @@ def test_list_orders_filter_by_date_range_inclusive(client):
 
     response = client.get(f"/api/v1/orders?date_from={created_date}&date_to={created_date}")
     assert response.status_code == 200
-    ids = [o["id"] for o in response.json()]
+    ids = [o["id"] for o in response.json()["items"]]
     assert order["id"] in ids
 
 
@@ -164,7 +166,7 @@ def test_search_matches_order_id(client):
 
     response = client.get(f"/api/v1/orders?q={order['id']}")
     assert response.status_code == 200
-    assert any(o["id"] == order["id"] for o in response.json())
+    assert any(o["id"] == order["id"] for o in response.json()["items"])
 
 
 def test_search_matches_customer_name_case_insensitive(client):
@@ -183,7 +185,7 @@ def test_search_matches_customer_name_case_insensitive(client):
 
     response = client.get("/api/v1/orders?q=zephyrine")
     assert response.status_code == 200
-    assert any(o["id"] == order["id"] for o in response.json())
+    assert any(o["id"] == order["id"] for o in response.json()["items"])
 
 
 def test_filters_combine_with_and(client):
@@ -191,8 +193,33 @@ def test_filters_combine_with_and(client):
 
     response = client.get(f"/api/v1/orders?status=cancelled&q={order['id']}")
     assert response.status_code == 200
-    assert any(o["id"] == order["id"] for o in response.json())
+    assert any(o["id"] == order["id"] for o in response.json()["items"])
 
     response = client.get(f"/api/v1/orders?status=pending&q={order['id']}")
     assert response.status_code == 200
-    assert all(o["id"] != order["id"] for o in response.json())
+    assert all(o["id"] != order["id"] for o in response.json()["items"])
+
+
+def test_list_orders_pagination_envelope_and_slices(client):
+    for i in range(3):
+        _setup_order(client, f"pg{i}@c.com", f"PGO-SKU{i}")
+
+    body = client.get("/api/v1/orders?skip=0&limit=2").json()
+    assert set(body.keys()) == {"items", "total", "skip", "limit"}
+    assert len(body["items"]) == 2
+    assert (body["skip"], body["limit"]) == (0, 2)
+
+    page2 = client.get("/api/v1/orders?skip=2&limit=2").json()
+    assert len(page2["items"]) >= 1
+    assert page2["total"] == body["total"]
+
+
+def test_list_orders_total_respects_filters(client):
+    cancelled = _setup_order(client, "tf1@c.com", "TFC-SKU1", status="cancelled")
+    pending = _setup_order(client, "tf2@c.com", "TFC-SKU2")
+
+    body = client.get("/api/v1/orders?status=pending&skip=0&limit=100").json()
+    ids = [o["id"] for o in body["items"]]
+    assert pending["id"] in ids
+    assert cancelled["id"] not in ids
+    assert body["total"] == len(body["items"])

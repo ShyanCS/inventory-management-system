@@ -73,7 +73,7 @@ def test_list_low_stock_products(db_session):
     service.create_product(ProductCreate(name="Zero", sku="ZS-1", price=10, quantity_in_stock=0))
 
     # Default per-product threshold is 10 (inclusive)
-    low_stock = service.list_products(skip=0, limit=100, low_stock=True)
+    low_stock, _total = service.list_products(skip=0, limit=100, low_stock=True)
     assert len(low_stock) == 2
     skus = [p.sku for p in low_stock]
     assert "LS-1" in skus

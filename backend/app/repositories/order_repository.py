@@ -25,17 +25,15 @@ class OrderRepository:
         stmt = select(Order).options(joinedload(Order.items)).where(Order.id == order_id)
         return self.session.execute(stmt).unique().scalar_one_or_none()
 
-    def list(
+    def _filtered_stmt(
         self,
-        skip: int = 0,
-        limit: int = 50,
         customer_id: int | None = None,
         status: str | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
         q: str | None = None,
-    ) -> list[Order]:
-        stmt = select(Order).options(joinedload(Order.items))
+    ):
+        stmt = select(Order)
         if customer_id:
             stmt = stmt.where(Order.customer_id == customer_id)
         if status:
@@ -50,8 +48,39 @@ class OrderRepository:
             if term.isdigit():
                 conditions.append(Order.id == int(term))
             stmt = stmt.join(Order.customer).where(or_(*conditions))
-        stmt = stmt.offset(skip).limit(limit).order_by(Order.id.desc())
+        return stmt
+
+    def list(
+        self,
+        skip: int = 0,
+        limit: int = 50,
+        customer_id: int | None = None,
+        status: str | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        q: str | None = None,
+    ) -> list[Order]:
+        stmt = (
+            self._filtered_stmt(customer_id, status, date_from, date_to, q)
+            .options(joinedload(Order.items))
+            .offset(skip)
+            .limit(limit)
+            .order_by(Order.id.desc())
+        )
         return list(self.session.execute(stmt).scalars().unique().all())
+
+    def count(
+        self,
+        customer_id: int | None = None,
+        status: str | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        q: str | None = None,
+    ) -> int:
+        stmt = select(func.count()).select_from(
+            self._filtered_stmt(customer_id, status, date_from, date_to, q).subquery()
+        )
+        return self.session.execute(stmt).scalar_one()
 
     def update(self, order: Order) -> Order:
         self.session.commit()

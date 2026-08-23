@@ -54,8 +54,28 @@ def test_list_customers(client):
     response = client.get("/api/v1/customers")
     assert response.status_code == 200
     data = response.json()
-    assert isinstance(data, list)
-    assert len(data) >= 2
+    assert set(data.keys()) == {"items", "total", "skip", "limit"}
+    assert isinstance(data["items"], list)
+    assert len(data["items"]) >= 2
+    assert data["total"] >= 2
+
+
+def test_list_customers_pagination_slices_and_total(client):
+    for i in range(5):
+        client.post(
+            "/api/v1/customers",
+            json={"full_name": f"PG{i}", "email": f"pg{i}@test.com", "phone": str(i)},
+        )
+
+    page1 = client.get("/api/v1/customers?skip=0&limit=2").json()
+    page2 = client.get("/api/v1/customers?skip=2&limit=2").json()
+
+    assert len(page1["items"]) == 2
+    assert len(page2["items"]) == 2
+    assert page1["items"][0]["id"] != page2["items"][0]["id"]
+    assert page1["total"] == page2["total"] >= 5
+    assert (page1["skip"], page1["limit"]) == (0, 2)
+    assert (page2["skip"], page2["limit"]) == (2, 2)
 
 
 def test_delete_customer(client):

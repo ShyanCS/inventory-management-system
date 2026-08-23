@@ -6,7 +6,10 @@ import { useState } from 'react'
 import { useProducts } from '../hooks/useProducts'
 import ProductForm from '../components/products/ProductForm'
 import ConfirmDialog from '../components/common/ConfirmDialog'
+import Pagination from '../components/common/Pagination'
 import { Plus, Edit2, Trash2 } from 'lucide-react'
+
+const PAGE_SIZE = 10
 
 // Stock badge helper
 function StockBadge({ qty, threshold }) {
@@ -30,13 +33,28 @@ function StockBadge({ qty, threshold }) {
 }
 
 export default function ProductsPage() {
-  const { products, loading, error, createProduct, updateProduct, deleteProduct } = useProducts()
+  const {
+    products,
+    total,
+    loading,
+    error,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+    fetchProducts,
+  } = useProducts()
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
   const [formApiError, setFormApiError] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteError, setDeleteError] = useState(null)
+  const [page, setPage] = useState(1)
+
+  const handlePageChange = (nextPage) => {
+    setPage(nextPage)
+    fetchProducts({ skip: (nextPage - 1) * PAGE_SIZE, limit: PAGE_SIZE })
+  }
 
   const openAdd = () => {
     setEditingProduct(null)
@@ -222,6 +240,7 @@ export default function ProductsPage() {
               </tbody>
             </table>
           )}
+          <Pagination page={page} pageSize={PAGE_SIZE} total={total} onChange={handlePageChange} />
         </div>
       )}
 

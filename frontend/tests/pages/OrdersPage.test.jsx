@@ -171,17 +171,22 @@ describe('OrdersPage filters', () => {
     server.use(
       http.get('http://localhost:8000/api/v1/orders', ({ request }) => {
         requestedUrl = request.url
-        return HttpResponse.json([
-          {
-            id: 7,
-            customer_id: 1,
-            status: 'completed',
-            total_amount: 19.99,
-            items: [],
-            created_at: '2026-01-15T10:00:00Z',
-            updated_at: '2026-01-15T10:00:00Z',
-          },
-        ])
+        return HttpResponse.json({
+          items: [
+            {
+              id: 7,
+              customer_id: 1,
+              status: 'completed',
+              total_amount: 19.99,
+              items: [],
+              created_at: '2026-01-15T10:00:00Z',
+              updated_at: '2026-01-15T10:00:00Z',
+            },
+          ],
+          total: 1,
+          skip: 0,
+          limit: 50,
+        })
       }),
     )
     render(<OrdersPage />)
@@ -200,7 +205,7 @@ describe('OrdersPage filters', () => {
     server.use(
       http.get('http://localhost:8000/api/v1/orders', ({ request }) => {
         requestedUrl = request.url
-        return HttpResponse.json([])
+        return HttpResponse.json({ items: [], total: 0, skip: 0, limit: 50 })
       }),
     )
     render(<OrdersPage />)
@@ -222,7 +227,7 @@ describe('OrdersPage filters', () => {
     server.use(
       http.get('http://localhost:8000/api/v1/orders', () => {
         callCount++
-        return HttpResponse.json([])
+        return HttpResponse.json({ items: [], total: 0, skip: 0, limit: 50 })
       }),
     )
     render(<OrdersPage />)
@@ -243,7 +248,11 @@ describe('OrdersPage filters', () => {
   })
 
   it('shows the default empty state when no filters are active', async () => {
-    server.use(http.get('http://localhost:8000/api/v1/orders', () => HttpResponse.json([])))
+    server.use(
+      http.get('http://localhost:8000/api/v1/orders', () =>
+        HttpResponse.json({ items: [], total: 0, skip: 0, limit: 50 }),
+      ),
+    )
     render(<OrdersPage />)
     expect(await screen.findByText(/no orders yet/i)).toBeInTheDocument()
   })

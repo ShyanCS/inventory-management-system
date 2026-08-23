@@ -40,8 +40,8 @@ class CustomerService:
             raise NotFoundException(message=f"Customer with ID {customer_id} not found")
         return customer
 
-    def list_customers(self, skip: int = 0, limit: int = 50) -> list[Customer]:
-        return self.repo.list(skip=skip, limit=limit)
+    def list_customers(self, skip: int = 0, limit: int = 50) -> tuple[list[Customer], int]:
+        return self.repo.list(skip=skip, limit=limit), self.repo.count()
 
     def delete_customer(self, customer_id: int) -> None:
         customer = self.get_customer(customer_id)

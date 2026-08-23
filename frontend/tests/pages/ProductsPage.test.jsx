@@ -180,18 +180,23 @@ describe('ProductsPage', () => {
   it('uses the per-product threshold for the low stock badge', async () => {
     server.use(
       http.get('http://localhost:8000/api/v1/products', () => {
-        return HttpResponse.json([
-          {
-            id: 1,
-            name: 'Custom Threshold',
-            sku: 'CT-001',
-            price: 5,
-            quantity_in_stock: 8,
-            low_stock_threshold: 5,
-            created_at: '2026-01-01T00:00:00Z',
-            updated_at: '2026-01-01T00:00:00Z',
-          },
-        ])
+        return HttpResponse.json({
+          items: [
+            {
+              id: 1,
+              name: 'Custom Threshold',
+              sku: 'CT-001',
+              price: 5,
+              quantity_in_stock: 8,
+              low_stock_threshold: 5,
+              created_at: '2026-01-01T00:00:00Z',
+              updated_at: '2026-01-01T00:00:00Z',
+            },
+          ],
+          total: 1,
+          skip: 0,
+          limit: 50,
+        })
       }),
     )
     render(<ProductsPage />)
@@ -203,17 +208,22 @@ describe('ProductsPage', () => {
   it('falls back to threshold 10 for legacy products without one', async () => {
     server.use(
       http.get('http://localhost:8000/api/v1/products', () => {
-        return HttpResponse.json([
-          {
-            id: 2,
-            name: 'Legacy Product',
-            sku: 'LP-001',
-            price: 5,
-            quantity_in_stock: 7,
-            created_at: '2026-01-01T00:00:00Z',
-            updated_at: '2026-01-01T00:00:00Z',
-          },
-        ])
+        return HttpResponse.json({
+          items: [
+            {
+              id: 2,
+              name: 'Legacy Product',
+              sku: 'LP-001',
+              price: 5,
+              quantity_in_stock: 7,
+              created_at: '2026-01-01T00:00:00Z',
+              updated_at: '2026-01-01T00:00:00Z',
+            },
+          ],
+          total: 1,
+          skip: 0,
+          limit: 50,
+        })
       }),
     )
     render(<ProductsPage />)
@@ -250,5 +260,46 @@ describe('ProductsPage', () => {
     await waitFor(() => {
       expect(screen.getByText(/cannot delete a product/i)).toBeInTheDocument()
     })
+  })
+})
+
+describe('ProductsPage pagination', () => {
+  it('requests the next page with skip when Next is clicked', async () => {
+    const user = userEvent.setup()
+    const manyProducts = Array.from({ length: 12 }, (_, i) => ({
+      id: i + 1,
+      name: `Product ${i + 1}`,
+      sku: `PG-${String(i + 1).padStart(3, '0')}`,
+      price: 5,
+      quantity_in_stock: 50,
+      low_stock_threshold: 10,
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    }))
+    let requestedUrl = ''
+    server.use(
+      http.get('http://localhost:8000/api/v1/products', ({ request }) => {
+        requestedUrl = request.url
+        const url = new URL(request.url)
+        const skip = Number(url.searchParams.get('skip') ?? 0)
+        const limit = Number(url.searchParams.get('limit') ?? 10)
+        return HttpResponse.json({
+          items: manyProducts.slice(skip, skip + limit),
+          total: manyProducts.length,
+          skip,
+          limit,
+        })
+      }),
+    )
+    render(<ProductsPage />)
+    await waitFor(() => screen.getByText('Product 1'))
+    expect(screen.getByText(/page 1 of 2/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /next page/i }))
+
+    await waitFor(() => {
+      expect(requestedUrl).toContain('skip=10')
+    })
+    await waitFor(() => screen.getByText('Product 11'))
   })
 })

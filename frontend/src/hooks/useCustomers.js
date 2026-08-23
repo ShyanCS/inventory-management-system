@@ -1,11 +1,14 @@
 /**
  * useCustomers — custom hook for customer data management.
  */
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { customersApi } from '../api/customers'
 
 export function useCustomers() {
   const [customers, setCustomers] = useState([])
+  const [total, setTotal] = useState(0)
+  // Latest active params, so post-mutation refreshes preserve them
+  const paramsRef = useRef({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -16,7 +19,8 @@ export function useCustomers() {
       try {
         const { data } = await customersApi.list()
         if (!ignore) {
-          setCustomers(data)
+          setCustomers(data.items)
+          setTotal(data.total)
           setError(null)
         }
       } catch (err) {
@@ -37,11 +41,14 @@ export function useCustomers() {
     }
   }, [])
 
-  // Refresh the list after mutations (keeps current UI visible while fetching)
-  const fetchCustomers = useCallback(async () => {
+  // Fetch with optional pagination params; remembers the latest params so
+  // refreshes after mutations keep them applied.
+  const fetchCustomers = useCallback(async (params) => {
+    if (params !== undefined) paramsRef.current = params
     try {
-      const { data } = await customersApi.list()
-      setCustomers(data)
+      const { data } = await customersApi.list(params ?? paramsRef.current)
+      setCustomers(data.items)
+      setTotal(data.total)
       setError(null)
     } catch (err) {
       setError(err.response?.data?.error?.message || 'Failed to load customers')
@@ -61,6 +68,7 @@ export function useCustomers() {
 
   return {
     customers,
+    total,
     loading,
     error,
     fetchCustomers,
