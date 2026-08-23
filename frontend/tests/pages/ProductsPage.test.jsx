@@ -128,4 +128,28 @@ describe('ProductsPage', () => {
       expect(screen.queryByText(/are you sure/i)).not.toBeInTheDocument()
     })
   })
+
+  it('shows an error banner when deleting a product fails', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.delete('http://localhost:8000/api/v1/products/:id', () => {
+        return HttpResponse.json(
+          { error: { code: 'CONFLICT', message: 'Cannot delete a product referenced by an order', details: {} } },
+          { status: 409 }
+        )
+      })
+    )
+    render(<ProductsPage />)
+    await waitFor(() => screen.getByText('Wireless Mouse'))
+
+    await user.click(screen.getAllByRole('button', { name: /delete/i })[0])
+    await waitFor(() => {
+      expect(screen.getByText(/are you sure/i)).toBeInTheDocument()
+    })
+    await user.click(screen.getByRole('button', { name: /confirm/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText(/cannot delete a product/i)).toBeInTheDocument()
+    })
+  })
 })

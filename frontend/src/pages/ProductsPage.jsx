@@ -22,6 +22,7 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState(null)
   const [formApiError, setFormApiError] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleteError, setDeleteError] = useState(null)
 
   const openAdd = () => {
     setEditingProduct(null)
@@ -56,10 +57,11 @@ export default function ProductsPage() {
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return
+    setDeleteError(null)
     try {
       await deleteProduct(deleteTarget.id)
     } catch (err) {
-      // Error is captured by useProducts hook
+      setDeleteError(err.response?.data?.error?.message || 'Failed to delete product.')
     } finally {
       setDeleteTarget(null)
     }
@@ -98,6 +100,13 @@ export default function ProductsPage() {
       {!loading && error && (
         <div role="alert" className="glass-card !border-rose-500/30 !bg-rose-500/5 px-5 py-4 text-sm text-rose-400">
           <span className="font-medium">Error:</span> {error}
+        </div>
+      )}
+
+      {/* Delete error state */}
+      {deleteError && (
+        <div role="alert" className="glass-card !border-rose-500/30 !bg-rose-500/5 px-5 py-4 text-sm text-rose-400">
+          <span className="font-medium">Error:</span> {deleteError}
         </div>
       )}
 
