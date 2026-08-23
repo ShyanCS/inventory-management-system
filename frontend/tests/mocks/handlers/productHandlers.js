@@ -31,7 +31,12 @@ const mockProducts = [
 export const productHandlers = [
   // List products
   http.get(`${BASE}/products`, () => {
-    return HttpResponse.json(mockProducts)
+    return HttpResponse.json({
+      items: mockProducts,
+      total: mockProducts.length,
+      skip: 0,
+      limit: 50,
+    })
   }),
 
   // Get single product

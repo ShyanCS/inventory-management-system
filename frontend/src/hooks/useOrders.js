@@ -6,6 +6,7 @@ import { ordersApi } from '../api/orders'
 
 export function useOrders() {
   const [orders, setOrders] = useState([])
+  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   // Latest active filters, so post-mutation refreshes preserve them
@@ -18,7 +19,8 @@ export function useOrders() {
       try {
         const { data } = await ordersApi.list()
         if (!ignore) {
-          setOrders(data)
+          setOrders(data.items)
+          setTotal(data.total)
           setError(null)
         }
       } catch (err) {
@@ -45,7 +47,8 @@ export function useOrders() {
     if (params !== undefined) filtersRef.current = params
     try {
       const { data } = await ordersApi.list(params ?? filtersRef.current)
-      setOrders(data)
+      setOrders(data.items)
+      setTotal(data.total)
       setError(null)
     } catch (err) {
       setError(err.response?.data?.error?.message || 'Failed to load orders')
@@ -65,6 +68,7 @@ export function useOrders() {
 
   return {
     orders,
+    total,
     loading,
     error,
     fetchOrders,

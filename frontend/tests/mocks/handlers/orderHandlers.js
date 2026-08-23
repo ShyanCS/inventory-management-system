@@ -49,7 +49,7 @@ const mockSummary = {
 export const orderHandlers = [
   // List orders
   http.get(`${BASE}/orders`, () => {
-    return HttpResponse.json(mockOrders)
+    return HttpResponse.json({ items: mockOrders, total: mockOrders.length, skip: 0, limit: 50 })
   }),
 
   // Get single order

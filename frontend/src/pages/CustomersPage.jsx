@@ -6,15 +6,25 @@ import { useState } from 'react'
 import { useCustomers } from '../hooks/useCustomers'
 import CustomerForm from '../components/customers/CustomerForm'
 import ConfirmDialog from '../components/common/ConfirmDialog'
+import Pagination from '../components/common/Pagination'
 import { UserPlus, Trash2, AlertCircle } from 'lucide-react'
 
+const PAGE_SIZE = 10
+
 export default function CustomersPage() {
-  const { customers, loading, error, createCustomer, deleteCustomer } = useCustomers()
+  const { customers, total, loading, error, createCustomer, deleteCustomer, fetchCustomers } =
+    useCustomers()
 
   const [modalOpen, setModalOpen] = useState(false)
   const [formApiError, setFormApiError] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteError, setDeleteError] = useState(null)
+  const [page, setPage] = useState(1)
+
+  const handlePageChange = (nextPage) => {
+    setPage(nextPage)
+    fetchCustomers({ skip: (nextPage - 1) * PAGE_SIZE, limit: PAGE_SIZE })
+  }
 
   const openAdd = () => {
     setFormApiError(null)
@@ -196,6 +206,7 @@ export default function CustomersPage() {
               </tbody>
             </table>
           )}
+          <Pagination page={page} pageSize={PAGE_SIZE} total={total} onChange={handlePageChange} />
         </div>
       )}
 

@@ -9,7 +9,10 @@ import { useProducts } from '../hooks/useProducts'
 import { useCustomers } from '../hooks/useCustomers'
 import OrderForm from '../components/orders/OrderForm'
 import ConfirmDialog from '../components/common/ConfirmDialog'
+import Pagination from '../components/common/Pagination'
 import { Plus, XCircle, ChevronDown, Search } from 'lucide-react'
+
+const PAGE_SIZE = 10
 
 const STATUS_STYLES = {
   pending: 'bg-amber-500/20 text-amber-600 border border-amber-500/30',
@@ -28,7 +31,7 @@ function StatusBadge({ status }) {
 }
 
 export default function OrdersPage() {
-  const { orders, loading, error, createOrder, cancelOrder, fetchOrders } = useOrders()
+  const { orders, total, loading, error, createOrder, cancelOrder, fetchOrders } = useOrders()
   const { products } = useProducts()
   const { customers } = useCustomers()
 
@@ -50,6 +53,7 @@ export default function OrdersPage() {
   const handleStatusChange = (status) => {
     const next = { ...filters, status }
     setFilters(next)
+    setPage(1)
     fetchOrders(buildParams(next))
   }
 
@@ -61,6 +65,7 @@ export default function OrdersPage() {
       return
     }
     setDateError(null)
+    setPage(1)
     fetchOrders(buildParams(next))
   }
 
@@ -68,11 +73,20 @@ export default function OrdersPage() {
   const handleSearchChange = (q) => {
     const next = { ...filters, q }
     setFilters(next)
+    setPage(1)
     clearTimeout(searchTimeoutRef.current)
     searchTimeoutRef.current = setTimeout(() => fetchOrders(buildParams(next)), 300)
   }
 
   const hasActiveFilters = Object.values(filters).some((value) => value !== '')
+
+  const [page, setPage] = useState(1)
+
+  const handlePageChange = (nextPage) => {
+    setPage(nextPage)
+    const filterParams = buildParams(filters)
+    fetchOrders({ ...filterParams, skip: (nextPage - 1) * PAGE_SIZE, limit: PAGE_SIZE })
+  }
 
   // Build customer lookup map
   const customerMap = Object.fromEntries(customers.map((c) => [c.id, c]))
@@ -322,6 +336,7 @@ export default function OrdersPage() {
               )
             })
           )}
+          <Pagination page={page} pageSize={PAGE_SIZE} total={total} onChange={handlePageChange} />
         </div>
       )}
 

@@ -27,7 +27,12 @@ const mockCustomers = [
 export const customerHandlers = [
   // List customers
   http.get(`${BASE}/customers`, () => {
-    return HttpResponse.json(mockCustomers)
+    return HttpResponse.json({
+      items: mockCustomers,
+      total: mockCustomers.length,
+      skip: 0,
+      limit: 50,
+    })
   }),
 
   // Get single customer
