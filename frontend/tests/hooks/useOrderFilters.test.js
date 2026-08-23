@@ -11,9 +11,9 @@ afterEach(() => {
 
 describe('buildOrderParams', () => {
   it('strips empty-string filters', () => {
-    expect(
-      buildOrderParams({ status: 'pending', date_from: '', date_to: '', q: '' }),
-    ).toEqual({ status: 'pending' })
+    expect(buildOrderParams({ status: 'pending', date_from: '', date_to: '', q: '' })).toEqual({
+      status: 'pending',
+    })
   })
 })
 
