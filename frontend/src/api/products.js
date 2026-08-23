@@ -10,4 +10,11 @@ export const productsApi = {
   create: (data) => apiClient.post('/products', data),
   update: (id, data) => apiClient.put(`/products/${id}`, data),
   delete: (id) => apiClient.delete(`/products/${id}`),
+  // Raw CSV text — skip axios' JSON transform so the payload stays untouched
+  exportCsv: (params = {}) =>
+    apiClient.get('/products/export', {
+      params,
+      responseType: 'text',
+      transformResponse: [(d) => d],
+    }),
 }
