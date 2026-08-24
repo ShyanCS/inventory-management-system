@@ -43,7 +43,7 @@ export function useCustomers() {
 
   // Fetch with optional pagination params; remembers the latest params so
   // refreshes after mutations keep them applied.
-  const fetchCustomers = useCallback(async (params) => {
+  const fetchCustomers = useCallback(async (params = undefined) => {
     if (params !== undefined) paramsRef.current = params
     try {
       const { data } = await customersApi.list(params ?? paramsRef.current)

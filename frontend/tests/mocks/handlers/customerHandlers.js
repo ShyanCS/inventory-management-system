@@ -49,7 +49,7 @@ export const customerHandlers = [
 
   // Create customer
   http.post(`${BASE}/customers`, async ({ request }) => {
-    const body = await request.json()
+    const body = /** @type {any} */ (await request.json())
     // Simulate duplicate email
     if (body.email === 'dupe@example.com') {
       return HttpResponse.json(
