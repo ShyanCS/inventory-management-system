@@ -1,8 +1,10 @@
 /**
  * ProductForm — modal form for creating and editing a product.
- * Handles client-side validation before calling the API.
+ * Client-side validation is defined by the productSchema (zod).
  */
 import { useState } from 'react'
+import { productSchema } from '../../schemas/product'
+import { toFieldErrors } from '../../schemas/utils'
 
 const emptyForm = {
   name: '',
@@ -10,21 +12,6 @@ const emptyForm = {
   price: '',
   quantity_in_stock: '0',
   low_stock_threshold: '10',
-}
-
-function validate(values) {
-  const errors = {}
-  if (!values.name.trim()) errors.name = 'Name is required'
-  if (!values.sku.trim()) errors.sku = 'SKU is required'
-  if (!values.price && values.price !== 0) {
-    errors.price = 'Price is required'
-  } else if (Number(values.price) <= 0) {
-    errors.price = 'Price must be greater than 0'
-  }
-  if (Number(values.quantity_in_stock) < 0) {
-    errors.quantity_in_stock = 'Quantity cannot be negative'
-  }
-  return errors
 }
 
 export default function ProductForm({ product, onSave, onCancel, apiError }) {
@@ -51,20 +38,14 @@ export default function ProductForm({ product, onSave, onCancel, apiError }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const validationErrors = validate(values)
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors)
+    const result = productSchema.safeParse(values)
+    if (!result.success) {
+      setErrors(toFieldErrors(result.error))
       return
     }
     setSubmitting(true)
     try {
-      await onSave({
-        name: values.name.trim(),
-        sku: values.sku.trim(),
-        price: parseFloat(values.price),
-        quantity_in_stock: parseInt(values.quantity_in_stock, 10),
-        low_stock_threshold: parseInt(values.low_stock_threshold, 10),
-      })
+      await onSave(result.data)
     } finally {
       setSubmitting(false)
     }

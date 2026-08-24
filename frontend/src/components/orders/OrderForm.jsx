@@ -2,23 +2,13 @@
  * OrderForm — modal form for creating a new order.
  * Supports multiple line items with dynamic add/remove.
  * Shows a live running total calculated client-side.
+ * Client-side validation is defined by the orderSchema (zod).
  */
 import { useState } from 'react'
+import { orderSchema } from '../../schemas/order'
+import { toFieldErrors } from '../../schemas/utils'
 
 const emptyItem = () => ({ product_id: '', quantity: 1 })
-
-function validate(customerId, items) {
-  const errors = {}
-  if (!customerId) errors.customer_id = 'Customer is required'
-  const itemErrors = items.map((item) => {
-    const e = {}
-    if (!item.product_id) e.product_id = 'Product is required'
-    if (!item.quantity || item.quantity < 1) e.quantity = 'Min quantity is 1'
-    return e
-  })
-  if (itemErrors.some((e) => Object.keys(e).length > 0)) errors.items = itemErrors
-  return errors
-}
 
 export default function OrderForm({ customers, products, onSave, onCancel, apiError }) {
   const [customerId, setCustomerId] = useState('')
@@ -51,18 +41,32 @@ export default function OrderForm({ customers, products, onSave, onCancel, apiEr
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const validationErrors = validate(customerId, items)
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors)
+    const result = orderSchema.safeParse({ customer_id: customerId, items })
+    if (!result.success) {
+      const fieldErrors = toFieldErrors(result.error)
+      const next = {}
+      if (fieldErrors.customer_id) next.customer_id = fieldErrors.customer_id
+      const itemErrors = items.map((_, idx) => {
+        const itemError = {}
+        if (fieldErrors[`items.${idx}.product_id`]) {
+          itemError.product_id = fieldErrors[`items.${idx}.product_id`]
+        }
+        if (fieldErrors[`items.${idx}.quantity`]) {
+          itemError.quantity = fieldErrors[`items.${idx}.quantity`]
+        }
+        return itemError
+      })
+      if (itemErrors.some((err) => Object.keys(err).length > 0)) next.items = itemErrors
+      setErrors(next)
       return
     }
     setSubmitting(true)
     try {
       await onSave({
         customer_id: Number(customerId),
-        items: items.map((item) => ({
+        items: result.data.items.map((item) => ({
           product_id: Number(item.product_id),
-          quantity: Number(item.quantity),
+          quantity: item.quantity,
         })),
       })
     } finally {

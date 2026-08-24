@@ -1,21 +1,12 @@
 /**
  * CustomerForm — modal form for creating a new customer.
+ * Client-side validation is defined by the customerSchema (zod).
  */
 import { useState } from 'react'
+import { customerSchema } from '../../schemas/customer'
+import { toFieldErrors } from '../../schemas/utils'
 
 const emptyForm = { full_name: '', email: '', phone: '' }
-
-function validate(values) {
-  const errors = {}
-  if (!values.full_name.trim()) errors.full_name = 'Name is required'
-  if (!values.email.trim()) {
-    errors.email = 'Email is required'
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
-    errors.email = 'Please enter a valid email address'
-  }
-  if (!values.phone.trim()) errors.phone = 'Phone is required'
-  return errors
-}
 
 export default function CustomerForm({ onSave, onCancel, apiError }) {
   const [values, setValues] = useState(emptyForm)
@@ -30,17 +21,17 @@ export default function CustomerForm({ onSave, onCancel, apiError }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const validationErrors = validate(values)
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors)
+    const result = customerSchema.safeParse(values)
+    if (!result.success) {
+      setErrors(toFieldErrors(result.error))
       return
     }
     setSubmitting(true)
     try {
       await onSave({
-        full_name: values.full_name.trim(),
-        email: values.email.trim().toLowerCase(),
-        phone: values.phone.trim(),
+        full_name: result.data.full_name,
+        email: result.data.email.toLowerCase(),
+        phone: result.data.phone,
       })
     } finally {
       setSubmitting(false)
