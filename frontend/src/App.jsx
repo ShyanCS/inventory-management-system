@@ -5,6 +5,7 @@ import OrdersPage from './pages/OrdersPage'
 import DashboardPage from './pages/DashboardPage'
 import Navbar from './components/layout/Navbar'
 import VideoBackground from './components/layout/VideoBackground'
+import ErrorBoundary from './components/common/ErrorBoundary'
 
 function Layout() {
   return (
@@ -26,7 +27,9 @@ function Layout() {
 export default function App() {
   return (
     <BrowserRouter>
-      <Layout />
+      <ErrorBoundary>
+        <Layout />
+      </ErrorBoundary>
     </BrowserRouter>
   )
 }
