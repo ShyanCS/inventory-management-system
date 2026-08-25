@@ -4,8 +4,11 @@
  * Base URL comes from the VITE_API_BASE_URL environment variable.
  * All API modules (products, customers, orders) import this client
  * instead of creating their own Axios instances.
+ *
+ * Failed requests are logged with structured context via the shared logger.
  */
 import axios from 'axios'
+import { logger } from '../lib/logger'
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
@@ -13,5 +16,18 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 })
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    logger.error('API request failed', {
+      method: error.config?.method?.toUpperCase(),
+      url: error.config?.url,
+      status: error.response?.status,
+      detail: error.message,
+    })
+    return Promise.reject(error)
+  },
+)
 
 export default apiClient
