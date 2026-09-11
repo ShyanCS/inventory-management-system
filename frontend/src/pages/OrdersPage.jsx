@@ -12,7 +12,7 @@ import OrderForm from '../components/orders/OrderForm'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import Pagination from '../components/common/Pagination'
 import { ordersApi } from '../api/orders'
-import { downloadBlobResponse, apiErrorMessage } from '../api/download'
+import { useCsvExport } from '../hooks/useCsvExport'
 import { Plus, XCircle, ChevronDown, Search, Download } from 'lucide-react'
 
 const PAGE_SIZE = 10
@@ -58,26 +58,16 @@ export default function OrdersPage() {
     setPage(1)
     fetchOrders(params)
   })
-  const [exporting, setExporting] = useState(false)
-  const [exportError, setExportError] = useState(null)
+  const { exporting, exportError, exportCsv } = useCsvExport()
 
   // Exports honor status/date filters; search term is intentionally ignored
-  const handleExport = async () => {
-    setExportError(null)
-    setExporting(true)
-    try {
-      const filterParams = buildOrderParams({
-        status: filters.status,
-        date_from: filters.date_from,
-        date_to: filters.date_to,
-      })
-      const response = await ordersApi.exportCsv(filterParams)
-      downloadBlobResponse(response, 'orders.csv')
-    } catch (err) {
-      setExportError(apiErrorMessage(err, 'Failed to export orders.'))
-    } finally {
-      setExporting(false)
-    }
+  const handleExport = () => {
+    const filterParams = buildOrderParams({
+      status: filters.status,
+      date_from: filters.date_from,
+      date_to: filters.date_to,
+    })
+    return exportCsv(() => ordersApi.exportCsv(filterParams), 'orders.csv', 'Failed to export orders.')
   }
 
   const handlePageChange = (nextPage) => {
